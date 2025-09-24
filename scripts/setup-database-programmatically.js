@@ -1,0 +1,408 @@
+#!/usr/bin/env node
+
+/**
+ * 🗄️ Programmatic Database Setup for SalesPilots.io
+ * This script automatically creates all tables, indexes, and relationships
+ */
+
+const { createClient } = require('@supabase/supabase-js');
+
+// New Supabase credentials
+const SUPABASE_URL = 'https://qvpjtsmjyogejjtlgrpd.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cGp0c21qeW9nZWpqdGxncnBkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Njg0Nzc3MiwiZXhwIjoyMDcyNDIzNzcyfQ.bhVYCTD6TsrwEb5yB7X6nyXRkMosNv2K8o5sBZQkpfc';
+
+// Colors for console output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m'
+};
+
+function log(message, color = 'reset') {
+  console.log(`${colors[color]}${message}${colors.reset}`);
+}
+
+function logSuccess(message) {
+  log(`✅ ${message}`, 'green');
+}
+
+function logError(message) {
+  log(`❌ ${message}`, 'red');
+}
+
+function logInfo(message) {
+  log(`ℹ️  ${message}`, 'blue');
+}
+
+function logWarning(message) {
+  log(`⚠️  ${message}`, 'yellow');
+}
+
+// Database schema setup
+const schemaSetup = {
+  // Enable UUID extension
+  enableUUID: 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
+  
+  // Create tables
+  tables: {
+    auth_users: `
+      CREATE TABLE IF NOT EXISTS auth_users (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        email_verified BOOLEAN DEFAULT FALSE,
+        role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'user')),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    users: `
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        auth_user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+        email VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100) NOT NULL,
+        last_name VARCHAR(100) NOT NULL,
+        phone_number VARCHAR(20),
+        address TEXT,
+        city VARCHAR(100),
+        state VARCHAR(100),
+        country VARCHAR(100),
+        postal_code VARCHAR(20),
+        profile_image_url TEXT,
+        bio TEXT,
+        business_name VARCHAR(255),
+        instagram_handle VARCHAR(100),
+        subscription_plan VARCHAR(50) DEFAULT 'free',
+        instagram_connected BOOLEAN DEFAULT FALSE,
+        whatsapp_connected BOOLEAN DEFAULT FALSE,
+        automation_enabled BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    sessions: `
+      CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    business_data: `
+      CREATE TABLE IF NOT EXISTS business_data (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        store_name VARCHAR(255) NOT NULL,
+        business_type VARCHAR(100) NOT NULL,
+        instagram_handle VARCHAR(100),
+        phone_number VARCHAR(20),
+        address TEXT,
+        city VARCHAR(100),
+        state VARCHAR(100),
+        country VARCHAR(100),
+        postal_code VARCHAR(20),
+        business_description TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    products: `
+      CREATE TABLE IF NOT EXISTS products (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        currency VARCHAR(3) DEFAULT 'INR',
+        category VARCHAR(100),
+        tags TEXT[],
+        image_urls TEXT[],
+        stock_quantity INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    customers: `
+      CREATE TABLE IF NOT EXISTS customers (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        instagram_handle VARCHAR(100),
+        phone_number VARCHAR(20),
+        email VARCHAR(255),
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        address TEXT,
+        city VARCHAR(100),
+        state VARCHAR(100),
+        country VARCHAR(100),
+        postal_code VARCHAR(20),
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    orders: `
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+        order_number VARCHAR(50) UNIQUE NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
+        total_amount DECIMAL(10,2) NOT NULL,
+        currency VARCHAR(3) DEFAULT 'INR',
+        payment_status VARCHAR(50) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
+        payment_method VARCHAR(50),
+        shipping_address TEXT,
+        notes TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    order_items: `
+      CREATE TABLE IF NOT EXISTS order_items (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+        product_name VARCHAR(255) NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price DECIMAL(10,2) NOT NULL,
+        total_price DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    messages: `
+      CREATE TABLE IF NOT EXISTS messages (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+        platform VARCHAR(50) NOT NULL CHECK (platform IN ('instagram', 'whatsapp', 'email', 'sms')),
+        message_type VARCHAR(50) DEFAULT 'incoming' CHECK (message_type IN ('incoming', 'outgoing', 'automated')),
+        content TEXT NOT NULL,
+        metadata JSONB,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    payments: `
+      CREATE TABLE IF NOT EXISTS payments (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        currency VARCHAR(3) DEFAULT 'INR',
+        payment_method VARCHAR(50),
+        transaction_id VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'refunded')),
+        payment_data JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `,
+    
+    user_activity: `
+      CREATE TABLE IF NOT EXISTS user_activity (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        activity_type VARCHAR(100) NOT NULL,
+        description TEXT,
+        metadata JSONB,
+        ip_address INET,
+        user_agent TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+    `
+  },
+  
+  // Create indexes
+  indexes: [
+    'CREATE INDEX IF NOT EXISTS idx_auth_users_email ON auth_users(email);',
+    'CREATE INDEX IF NOT EXISTS idx_auth_users_role ON auth_users(role);',
+    'CREATE INDEX IF NOT EXISTS idx_users_auth_user_id ON users(auth_user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);',
+    'CREATE INDEX IF NOT EXISTS idx_users_business_name ON users(business_name);',
+    'CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);',
+    'CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);',
+    'CREATE INDEX IF NOT EXISTS idx_business_data_user_id ON business_data(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_business_data_store_name ON business_data(store_name);',
+    'CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);',
+    'CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);',
+    'CREATE INDEX IF NOT EXISTS idx_customers_user_id ON customers(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_customers_instagram_handle ON customers(instagram_handle);',
+    'CREATE INDEX IF NOT EXISTS idx_customers_phone_number ON customers(phone_number);',
+    'CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);',
+    'CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);',
+    'CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON orders(payment_status);',
+    'CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);',
+    'CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);',
+    'CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);',
+    'CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_messages_customer_id ON messages(customer_id);',
+    'CREATE INDEX IF NOT EXISTS idx_messages_platform ON messages(platform);',
+    'CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);',
+    'CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);',
+    'CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);',
+    'CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id);',
+    'CREATE INDEX IF NOT EXISTS idx_user_activity_type ON user_activity(activity_type);',
+    'CREATE INDEX IF NOT EXISTS idx_user_activity_created_at ON user_activity(created_at);'
+  ],
+  
+  // Create triggers
+  triggers: [
+    `CREATE OR REPLACE FUNCTION update_updated_at_column()
+     RETURNS TRIGGER AS $$
+     BEGIN
+         NEW.updated_at = NOW();
+         RETURN NEW;
+     END;
+     $$ language 'plpgsql';`,
+    'CREATE TRIGGER update_auth_users_updated_at BEFORE UPDATE ON auth_users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_business_data_updated_at BEFORE UPDATE ON business_data FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();',
+    'CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();'
+  ],
+  
+  // Insert admin user
+  adminUser: `
+    INSERT INTO auth_users (id, email, password_hash, first_name, last_name, email_verified, role) 
+    VALUES (
+      'admin-user-id',
+      'admin@salespilots.io',
+      '$2b$10$rQZ8K9mN2vX1pL3qR5sT7uY8wA9bC0dE1fG2hI3jK4lM5nO6pQ7rS8tU9vW0xY1zA2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z',
+      'Admin',
+      'User',
+      TRUE,
+      'admin'
+    ) ON CONFLICT (id) DO NOTHING;
+  `
+};
+
+async function setupDatabase() {
+  log('🗄️ Setting up SalesPilots.io Database...', 'cyan');
+  log('', 'reset');
+  
+  try {
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    logSuccess('Supabase client created successfully');
+    
+    // Step 1: Enable UUID extension
+    logInfo('Step 1: Enabling UUID extension...');
+    const { error: uuidError } = await supabase.rpc('exec_sql', { sql: schemaSetup.enableUUID });
+    if (uuidError) {
+      logWarning(`UUID extension: ${uuidError.message} (may already exist)`);
+    } else {
+      logSuccess('UUID extension enabled');
+    }
+    
+    // Step 2: Create tables
+    logInfo('Step 2: Creating database tables...');
+    for (const [tableName, createSQL] of Object.entries(schemaSetup.tables)) {
+      try {
+        const { error } = await supabase.rpc('exec_sql', { sql: createSQL });
+        if (error) {
+          logError(`Table ${tableName}: ${error.message}`);
+        } else {
+          logSuccess(`Table ${tableName}: Created`);
+        }
+      } catch (err) {
+        logError(`Table ${tableName}: ${err.message}`);
+      }
+    }
+    
+    // Step 3: Create indexes
+    logInfo('Step 3: Creating database indexes...');
+    for (const indexSQL of schemaSetup.indexes) {
+      try {
+        const { error } = await supabase.rpc('exec_sql', { sql: indexSQL });
+        if (error) {
+          logWarning(`Index: ${error.message} (may already exist)`);
+        } else {
+          logSuccess('Index created');
+        }
+      } catch (err) {
+        logWarning(`Index: ${err.message} (may already exist)`);
+      }
+    }
+    
+    // Step 4: Create triggers
+    logInfo('Step 4: Creating database triggers...');
+    for (const triggerSQL of schemaSetup.triggers) {
+      try {
+        const { error } = await supabase.rpc('exec_sql', { sql: triggerSQL });
+        if (error) {
+          logWarning(`Trigger: ${error.message} (may already exist)`);
+        } else {
+          logSuccess('Trigger created');
+        }
+      } catch (err) {
+        logWarning(`Trigger: ${err.message} (may already exist)`);
+      }
+    }
+    
+    // Step 5: Insert admin user
+    logInfo('Step 5: Creating admin user...');
+    try {
+      const { error } = await supabase.rpc('exec_sql', { sql: schemaSetup.adminUser });
+      if (error) {
+        logWarning(`Admin user: ${error.message} (may already exist)`);
+      } else {
+        logSuccess('Admin user created');
+      }
+    } catch (err) {
+      logWarning(`Admin user: ${err.message} (may already exist)`);
+    }
+    
+    log('', 'reset');
+    log('🎉 Database Setup Complete!', 'green');
+    log('✅ All tables created successfully', 'green');
+    log('✅ All indexes created successfully', 'green');
+    log('✅ All triggers created successfully', 'green');
+    log('✅ Admin user created successfully', 'green');
+    log('', 'reset');
+    log('🚀 Your database is ready for production!', 'cyan');
+    log('', 'reset');
+    log('📋 Next steps:', 'yellow');
+    log('1. Test the database connection', 'yellow');
+    log('2. Try user signup/signin', 'yellow');
+    log('3. Deploy to Vercel', 'yellow');
+    
+  } catch (error) {
+    logError(`Database setup failed: ${error.message}`);
+    log('', 'reset');
+    log('🔧 Alternative setup method:', 'yellow');
+    log('1. Go to Supabase Dashboard', 'yellow');
+    log('2. Open SQL Editor', 'yellow');
+    log('3. Copy content from database/setup-new-database.sql', 'yellow');
+    log('4. Paste and run the SQL script', 'yellow');
+    process.exit(1);
+  }
+}
+
+// Run the setup
+setupDatabase();

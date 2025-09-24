@@ -1,0 +1,28 @@
+[
+  {
+    "id": "3655ef51-c843-4c19-a09b-472fd33814af",
+    "auth_user_id": "54e1f818-ded3-4cac-919d-9a546d80a347",
+    "email": "testadmin@gmail.com",
+    "first_name": "Sajhan",
+    "last_name": "Abdul Naser",
+    "created_at": "2025-09-23T15:35:36.471Z",
+    "business_name": "Sajhan",
+    "instagram_handle": "dssd",
+    "updated_at": "2025-09-23T15:35:36.472Z"
+  },
+  {
+    "id": "6f3a82ca-5bec-4247-b12d-63cb9d65ebc4",
+    "auth_user_id": "e514d271-3407-448b-a252-4146fb7187f3",
+    "email": "salespilot.io@gmail.com",
+    "first_name": "Sajhan",
+    "last_name": "Abdul Naser",
+    "business_name": "Sajhan",
+    "instagram_handle": "Sajhan",
+    "subscription_plan": "free",
+    "instagram_connected": false,
+    "whatsapp_connected": false,
+    "automation_enabled": false,
+    "created_at": "2025-09-23T15:43:29.708Z",
+    "updated_at": "2025-09-23T15:44:00.306Z"
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "user_1",
+    "email": "test123@gmail.com",
+    "passwordHash": "pbkdf2$120000$sha512$ee5d448393d3ca6327f37b5c1e6b5f6e$48b29f9ac6eab38413cd2210005bcf38c4229ea0c0997fe40c92402ce40f3b8c0687481012161bbd3346046532f0e38c4fab4285ee7d4d1922bac9627a85013a",
+    "firstName": "Test",
+    "lastName": "User",
+    "emailVerified": true,
+    "role": "user",
+    "createdAt": "2025-09-23T15:32:00.034Z"
+  },
+  {
+    "id": "admin_1",
+    "email": "admin@salespilots.io",
+    "passwordHash": "pbkdf2$120000$sha512$11c304e4dcd9e1ae52d863620b83f667$8b3bd1046d7d7faa6e063e98f8606949ddf3f8c4ea71e5d792738d4b3f76ba940e1279af5595bc84a3084eb33785587f85bcec02b4566df465762a3da6ae748f",
+    "firstName": "Admin",
+    "lastName": "User",
+    "emailVerified": true,
+    "role": "admin",
+    "createdAt": "2025-09-23T15:32:00.067Z"
+  },
+  {
+    "email": "testadmin@gmail.com",
+    "passwordHash": "pbkdf2$120000$sha512$bdf06ec3b712f47bc3910d3afaaf8390$9873b04546be7363ca1185912f6180b1b541c411eb3ecf1e750b407b1b7fc92823ac59cd7c0d6c51173a52d468c00a559f955529ea41bace245ecbf705acb1bd",
+    "firstName": "Sajhan",
+    "lastName": "Abdul Naser",
+    "emailVerified": false,
+    "id": "54e1f818-ded3-4cac-919d-9a546d80a347",
+    "createdAt": "2025-09-23T15:32:00.109Z"
+  },
+  {
+    "email": "salespilot.io@gmail.com",
+    "passwordHash": "pbkdf2$120000$sha512$4cb99cdfaf3e53f2ca27e52b14ab75ae$86505daef8b5d34aa1e8c9be980849b2d9ce00b2efe044bab6671a867a83b73f9735cef3a1ed5ca75b908d182cbf01a60c5b26e060245912ce38dcc161c6a088",
+    "firstName": "Sajhan",
+    "lastName": "Abdul Naser",
+    "emailVerified": false,
+    "id": "e514d271-3407-448b-a252-4146fb7187f3",
+    "createdAt": "2025-09-23T15:43:29.707Z"
+  }
+]

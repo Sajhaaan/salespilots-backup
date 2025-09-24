@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1758641736476",
+    "userId": "54e1f818-ded3-4cac-919d-9a546d80a347",
+    "action": "store_setup_completed",
+    "category": "onboarding",
+    "details": {
+      "businessName": "Sajhan",
+      "businessType": "Electronics"
+    },
+    "timestamp": "2025-09-23T15:35:36.475Z",
+    "createdAt": "2025-09-23T15:35:36.476Z"
+  },
+  {
+    "id": "1758642240310",
+    "userId": "e514d271-3407-448b-a252-4146fb7187f3",
+    "action": "store_setup_completed",
+    "category": "onboarding",
+    "details": {
+      "businessName": "Sajhan",
+      "businessType": "Home & Decor"
+    },
+    "timestamp": "2025-09-23T15:44:00.310Z",
+    "createdAt": "2025-09-23T15:44:00.310Z"
+  }
+]
