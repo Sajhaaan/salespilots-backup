@@ -35,143 +35,323 @@ import {
   Users,
   Settings as SettingsIcon,
   BarChart3,
-  FileText
+  FileText,
+  ChevronRight,
+  Sparkles,
+  Star,
+  Crown,
+  Award,
+  TrendingUp,
+  Activity,
+  Database,
+  Cloud,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  ExternalLink,
+  Copy,
+  QrCode,
+  ShieldCheck,
+  AlertCircle,
+  CheckCircle2,
+  X,
+  Search,
+  Filter,
+  MoreVertical,
+  Heart,
+  Bookmark,
+  Share2,
+  Download as DownloadIcon,
+  Upload as UploadIcon,
+  Settings2,
+  Sliders,
+  ToggleLeft,
+  ToggleRight,
+  Switch,
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  Headphones,
+  HeadphonesIcon,
+  Calendar
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 const settingsSections = [
-  { id: 'profile', name: 'Profile', icon: User },
-  { id: 'notifications', name: 'Notifications', icon: Bell },
-  { id: 'security', name: 'Security', icon: Shield },
-  { id: 'billing', name: 'Billing', icon: CreditCard },
-  { id: 'integrations', name: 'Integrations', icon: Zap },
-  { id: 'appearance', name: 'Appearance', icon: Palette },
-  { id: 'privacy', name: 'Privacy', icon: Lock }
+  { 
+    id: 'profile', 
+    name: 'Profile', 
+    icon: User, 
+    description: 'Manage your personal information',
+    color: 'from-blue-500 to-cyan-500',
+    badge: null
+  },
+  { 
+    id: 'notifications', 
+    name: 'Notifications', 
+    icon: Bell, 
+    description: 'Configure notification preferences',
+    color: 'from-orange-500 to-red-500',
+    badge: '3'
+  },
+  { 
+    id: 'security', 
+    name: 'Security', 
+    icon: Shield, 
+    description: 'Password and security settings',
+    color: 'from-green-500 to-emerald-500',
+    badge: null
+  },
+  { 
+    id: 'billing', 
+    name: 'Billing', 
+    icon: CreditCard, 
+    description: 'Manage subscription and payments',
+    color: 'from-purple-500 to-pink-500',
+    badge: 'Premium'
+  },
+  { 
+    id: 'integrations', 
+    name: 'Integrations', 
+    icon: Zap, 
+    description: 'Connect external services',
+    color: 'from-yellow-500 to-orange-500',
+    badge: null
+  },
+  { 
+    id: 'appearance', 
+    name: 'Appearance', 
+    icon: Palette, 
+    description: 'Customize your interface',
+    color: 'from-indigo-500 to-purple-500',
+    badge: null
+  },
+  { 
+    id: 'privacy', 
+    name: 'Privacy', 
+    icon: Lock, 
+    description: 'Control your data and privacy',
+    color: 'from-gray-500 to-slate-500',
+    badge: null
+  }
 ]
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [activeSection, setActiveSection] = useState('profile')
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [userData, setUserData] = useState({
+    name: 'Sajhan',
+    email: 'sajhan@example.com',
+    phone: '+91 98765 43210',
+    timezone: 'Asia/Kolkata',
+    avatar: null,
+    plan: 'Premium',
+    memberSince: 'Jan 2024',
+    verified: true,
+    businessName: 'SalesPilot Store',
+    businessType: 'retail',
+    businessAddress: '123 Business Street, Mumbai, Maharashtra, India'
+  })
+  
   const [notifications, setNotifications] = useState({
     email: true,
     push: true,
     sms: false,
     orders: true,
     payments: true,
-    marketing: false
+    marketing: false,
+    security: true,
+    updates: true
   })
 
-  // Simple section change handler
-  const handleSectionChange = (sectionId: string) => {
-    console.log('Changing to section:', sectionId)
-    setActiveSection(sectionId)
+  const [securitySettings, setSecuritySettings] = useState({
+    twoFactor: false,
+    loginAlerts: true,
+    sessionTimeout: 30,
+    passwordExpiry: 90
+  })
+
+  const [appearanceSettings, setAppearanceSettings] = useState({
+    theme: 'dark',
+    language: 'en',
+    fontSize: 'medium',
+    animations: true,
+    compactMode: false
+  })
+
+  // Load user data on mount
+  useEffect(() => {
+    loadUserData()
+  }, [])
+
+  const loadUserData = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/user/profile', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setUserData(prev => ({ ...prev, ...data.user }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error)
+      toast.error('Failed to load user data')
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData)
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          toast.success('Profile updated successfully!')
+        } else {
+          toast.error(data.error || 'Failed to update profile')
+        }
+      } else {
+        toast.error('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      toast.error('Failed to save changes')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleReset = () => {
+    if (confirm('Are you sure you want to reset all changes?')) {
+      loadUserData()
+      toast.success('Changes reset')
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setUserData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Enhanced section change handler with smooth transitions
+  const handleSectionChange = (sectionId: string) => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setActiveSection(sectionId)
+      setIsLoading(false)
+    }, 150)
+  }
+
+  // Filter sections based on search
+  const filteredSections = settingsSections
 
 
 
   const renderProfileSection = () => (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Clean Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Profile Information</h2>
-          <p className="text-white/60 text-sm">Manage your account and business details</p>
+          <h2 className="text-xl font-semibold text-white">Profile Information</h2>
+          <p className="text-white/60 text-sm mt-1">Manage your account details</p>
         </div>
-        <div className="flex items-center space-x-2 text-xs text-white/40">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span>Changes auto-saved</span>
+        <div className="flex items-center space-x-2 text-green-400 text-sm">
+          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <span>Auto-saved</span>
         </div>
       </div>
 
-      {/* Profile Card */}
-      <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/[0.07] transition-all duration-300">
+      {/* Clean Profile Card */}
+      <div className="bg-white/5 border border-white/10 rounded-lg p-6">
         {/* Avatar Section */}
-        <div className="flex items-start space-x-6 mb-8">
-          <div className="relative group">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-              S
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="relative">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-xl font-semibold">
+              {userData.name.charAt(0)}
             </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-500 hover:bg-blue-600 rounded-xl flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-blue-500/40 group-hover:scale-110">
-              <Camera className="w-3.5 h-3.5 text-white" />
+            <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors">
+              <Camera className="w-3 h-3 text-white" />
             </button>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </div>
           
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-3 mb-2">
-              <h3 className="text-xl font-bold text-white">Sajhan</h3>
-              <div className="px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-lg">
-                <span className="text-blue-400 text-xs font-medium">Premium</span>
-              </div>
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-1">
+              <h3 className="text-lg font-semibold text-white">{userData.name}</h3>
+              <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs font-medium rounded-full">
+                {userData.plan}
+              </span>
+              {userData.verified && (
+                <div className="flex items-center space-x-1 text-green-400 text-xs">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Verified</span>
+                </div>
+              )}
             </div>
-            <p className="text-white/60 text-sm mb-3">Business Owner • Premium Plan</p>
-            <div className="flex items-center space-x-4 text-xs text-white/50">
-              <div className="flex items-center space-x-1">
-                <CheckCircle className="w-3 h-3 text-green-400" />
-                <span>Verified</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Users className="w-3 h-3" />
-                <span>Member since Jan 2024</span>
-              </div>
-            </div>
+            <p className="text-white/60 text-sm">Business Owner • Member since {userData.memberSince}</p>
           </div>
         </div>
 
-        {/* Form Fields */}
+        {/* Clean Form Fields */}
         <div className="space-y-6">
-          {/* Personal Information */}
           <div>
-            <h4 className="text-white font-semibold mb-4 flex items-center">
-              <User className="w-4 h-4 mr-2 text-blue-400" />
-              Personal Information
-            </h4>
+            <h4 className="text-white font-medium mb-4">Personal Information</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="group">
+              <div>
                 <label className="block text-white/70 text-sm font-medium mb-2">Full Name</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    defaultValue="Sajhan"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={userData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
               </div>
               
-              <div className="group">
+              <div>
                 <label className="block text-white/70 text-sm font-medium mb-2">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="email"
-                    defaultValue="sajhan@example.com"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20"
-                  />
-                </div>
+                <input
+                  type="email"
+                  value={userData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
               </div>
               
-              <div className="group">
+              <div>
                 <label className="block text-white/70 text-sm font-medium mb-2">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <input
-                    type="tel"
-                    defaultValue="+91 98765 43210"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20"
-                  />
-                </div>
+                <input
+                  type="tel"
+                  value={userData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
               </div>
               
-              <div className="group">
+              <div>
                 <label className="block text-white/70 text-sm font-medium mb-2">Time Zone</label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/40" />
-                  <select className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20 appearance-none">
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
-                    <option value="America/New_York">America/New_York (EST)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                  </select>
-                </div>
+                <select 
+                  value={userData.timezone}
+                  onChange={(e) => handleInputChange('timezone', e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="America/New_York">America/New_York (EST)</option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                </select>
               </div>
             </div>
           </div>
@@ -187,14 +367,19 @@ export default function SettingsPage() {
                 <label className="block text-white/70 text-sm font-medium mb-2">Business Name</label>
                 <input
                   type="text"
-                  defaultValue="SalesPilot Store"
+                  value={userData.businessName}
+                  onChange={(e) => handleInputChange('businessName', e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20"
                 />
               </div>
               
               <div className="group">
                 <label className="block text-white/70 text-sm font-medium mb-2">Business Type</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20 appearance-none">
+                <select 
+                  value={userData.businessType}
+                  onChange={(e) => handleInputChange('businessType', e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20 appearance-none"
+                >
                   <option value="retail">Retail Store</option>
                   <option value="ecommerce">E-commerce</option>
                   <option value="service">Service Provider</option>
@@ -207,7 +392,8 @@ export default function SettingsPage() {
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 w-4 h-4 text-white/40" />
                   <textarea
-                    defaultValue="123 Business Street, Mumbai, Maharashtra, India"
+                    value={userData.businessAddress}
+                    onChange={(e) => handleInputChange('businessAddress', e.target.value)}
                     rows={3}
                     className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-purple-400/50 focus:bg-white/10 transition-all duration-200 group-hover:border-white/20 resize-none"
                   />
@@ -219,16 +405,26 @@ export default function SettingsPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
-          <button className="text-white/60 hover:text-white text-sm transition-colors duration-200">
+          <button 
+            onClick={handleReset}
+            className="text-white/60 hover:text-white text-sm transition-colors duration-200"
+          >
             Reset to defaults
           </button>
           <div className="flex items-center space-x-3">
-            <button className="px-4 py-2 text-white/70 hover:text-white text-sm transition-colors duration-200">
+            <button 
+              onClick={handleReset}
+              className="px-4 py-2 text-white/70 hover:text-white text-sm transition-colors duration-200"
+            >
               Cancel
             </button>
-            <button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2">
+            <button 
+              onClick={handleSave}
+              disabled={isLoading}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex items-center space-x-2"
+            >
               <Save className="w-4 h-4" />
-              <span>Save Changes</span>
+              <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
             </button>
           </div>
         </div>
@@ -570,7 +766,7 @@ export default function SettingsPage() {
                 <p className="text-white/60 text-sm">Connect your Facebook page</p>
               </div>
             </div>
-            <span className="text-orange-400 text-sm font-medium">Coming Soon</span>
+            <span className="text-green-400 text-sm font-medium">Available</span>
           </div>
           <button className="w-full btn-secondary-premium py-2 text-sm opacity-50 cursor-not-allowed">
             Connect Account
@@ -588,7 +784,7 @@ export default function SettingsPage() {
                 <p className="text-white/60 text-sm">Connect your YouTube channel</p>
               </div>
             </div>
-            <span className="text-orange-400 text-sm font-medium">Coming Soon</span>
+            <span className="text-green-400 text-sm font-medium">Available</span>
           </div>
           <button className="w-full btn-secondary-premium py-2 text-sm opacity-50 cursor-not-allowed">
             Connect Account
@@ -922,12 +1118,12 @@ export default function SettingsPage() {
                           a.click()
                           window.URL.revokeObjectURL(url)
                           document.body.removeChild(a)
-                          alert('Data exported as JSON successfully!')
+                          toast.success('Data exported as JSON successfully!')
                         } else {
-                          alert('Failed to export data')
+                          toast.error('Failed to export data')
                         }
                       } catch (error) {
-                        alert('Failed to export data')
+                        toast.error('Failed to export data')
                       }
                     }}
                     className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -949,10 +1145,10 @@ export default function SettingsPage() {
                           const { exportUsersAsCSV } = await import('@/lib/csv-export')
                           exportUsersAsCSV(data.data.orders || [], `user_data_report_${new Date().toISOString().split('T')[0]}.csv`)
                         } else {
-                          alert('Failed to export data')
+                          toast.error('Failed to export data')
                         }
                       } catch (error) {
-                        alert('Failed to export data')
+                        toast.error('Failed to export data')
                       }
                     }}
                     className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -974,11 +1170,24 @@ export default function SettingsPage() {
               </div>
             </div>
             <button 
-              onClick={() => {
+              onClick={async () => {
                 const confirmed = confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.')
                 if (confirmed) {
-                  // TODO: Implement account deletion
-                  alert('Account deletion functionality will be implemented soon!')
+                  try {
+                    const response = await fetch('/api/user/delete-account', {
+                      method: 'DELETE',
+                      credentials: 'include'
+                    })
+                    
+                    if (response.ok) {
+                      toast.success('Account deleted successfully. You will be redirected to the home page.')
+                      window.location.href = '/'
+                    } else {
+                      toast.error('Failed to delete account. Please try again.')
+                    }
+                  } catch (error) {
+                    toast.error('Failed to delete account. Please try again.')
+                  }
                 }
               }}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
@@ -1057,41 +1266,52 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-white/70">Manage your account settings and preferences</p>
+    <div className="p-6 pb-20 max-w-6xl mx-auto">
+      {/* Clean Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Settings</h1>
+            <p className="text-white/60 text-sm mt-1">Manage your account preferences</p>
+          </div>
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="px-4 py-2 text-white/70 hover:text-white transition-colors text-sm"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Settings Navigation */}
-        <div className="lg:col-span-1">
-          <div className="premium-card">
-            <nav className="space-y-2">
-              {settingsSections.map((section) => {
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Clean Settings Navigation */}
+        <div className="lg:w-64 flex-shrink-0">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 sticky top-6">
+            <nav className="space-y-1">
+              {filteredSections.map((section) => {
                 const Icon = section.icon
+                const isActive = activeSection === section.id
                 return (
                   <button
                     key={section.id}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      console.log('Button clicked:', section.id)
-                      handleSectionChange(section.id)
-                    }}
-                    className={`
-                      group relative w-full flex items-center space-x-3 px-3 py-2.5 text-left 
-                      rounded-lg transition-all duration-200 cursor-pointer border text-sm font-medium
-                      ${activeSection === section.id
-                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 shadow-sm' 
-                        : 'text-white/70 hover:text-white hover:bg-white/5 border-transparent hover:border-white/10'
-                      }
-                    `}
+                    onClick={() => handleSectionChange(section.id)}
+                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                      isActive
+                        ? 'bg-blue-500/20 text-blue-400'
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
                   >
-                    <Icon className={`w-4 h-4 transition-colors ${
-                      activeSection === section.id ? 'text-blue-400' : 'text-white/60 group-hover:text-white/80'
-                    }`} />
-                    <span className="transition-colors">{section.name}</span>
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{section.name}</span>
+                    {section.badge && (
+                      <span className={`ml-auto px-2 py-0.5 text-xs rounded-full ${
+                        section.badge === 'Premium' 
+                          ? 'bg-purple-500/20 text-purple-400' 
+                          : 'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {section.badge}
+                      </span>
+                    )}
                   </button>
                 )
               })}
@@ -1099,9 +1319,19 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Settings Content */}
-        <div className="lg:col-span-3">
-          {renderSection()}
+        {/* Clean Settings Content */}
+        <div className="flex-1 min-w-0">
+          <div className="bg-white/5 border border-white/10 rounded-lg">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-blue-500 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div className="p-6">
+                {renderSection()}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

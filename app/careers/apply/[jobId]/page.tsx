@@ -174,7 +174,7 @@ export default function JobApplicationPage({ params }: { params: { jobId: string
       formDataToSend.append('jobId', jobId.toString())
       formDataToSend.append('jobTitle', job.title)
 
-      const response = await fetch('/api/careers/apply', {
+      const response = await fetch('/api/public/careers/apply', {
         method: 'POST',
         body: formDataToSend
       })

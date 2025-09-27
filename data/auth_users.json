@@ -36,5 +36,14 @@
     "emailVerified": false,
     "id": "e514d271-3407-448b-a252-4146fb7187f3",
     "createdAt": "2025-09-23T15:43:29.707Z"
+  },
+  {
+    "email": "test@example.com",
+    "passwordHash": "pbkdf2$120000$sha512$ea6d01577eb286d79b12a1876ceafd4f$edfb8add54b4af091abec423394812cc741c7eaee03da533911ccc76c746b746117b9f6120adbb0d420cc5eabfa232ec791a3cc66cdfc4c65f85b2b66a919572",
+    "firstName": "Test",
+    "lastName": "User",
+    "emailVerified": false,
+    "id": "aa8dc30b-33cb-4e69-80ca-cb3eb150e360",
+    "createdAt": "2025-09-25T20:41:50.084Z"
   }
 ]

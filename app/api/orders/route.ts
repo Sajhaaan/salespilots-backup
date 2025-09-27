@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
 import { SimpleDB } from '@/lib/database'
 
 // Initialize database instances
@@ -15,13 +16,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get orders for this user
     let orders = await ordersDB.findBy('userId', user.id)
@@ -53,17 +52,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
     
-    const user = users[0]
     const orderData = await request.json()
+    
+    // Validate required fields
+    if (!orderData.customer_id || !orderData.product_id || !orderData.total_amount) {
+      return NextResponse.json({
+        error: 'Customer ID, Product ID, and total amount are required'
+      }, { status: 400 })
+    }
+
+    // Validate data types
+    if (typeof orderData.total_amount !== 'number' || orderData.total_amount <= 0) {
+      return NextResponse.json({
+        error: 'Total amount must be a positive number'
+      }, { status: 400 })
+    }
+
+    if (orderData.quantity && (typeof orderData.quantity !== 'number' || orderData.quantity <= 0)) {
+      return NextResponse.json({
+        error: 'Quantity must be a positive number'
+      }, { status: 400 })
+    }
     
     // Create new order
     const newOrder = await ordersDB.create({
+      id: `ORD-${Date.now()}`,
       userId: user.id,
       customerId: orderData.customer_id,
       productId: orderData.product_id,
@@ -71,8 +90,10 @@ export async function POST(request: NextRequest) {
       total_amount: orderData.total_amount,
       status: 'pending',
       payment_status: 'pending',
-      delivery_address: orderData.delivery_address,
-      notes: orderData.notes
+      delivery_address: orderData.delivery_address || '',
+      notes: orderData.notes || '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
 
     return NextResponse.json({

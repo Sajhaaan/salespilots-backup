@@ -24,5 +24,19 @@
     "automation_enabled": false,
     "created_at": "2025-09-23T15:43:29.708Z",
     "updated_at": "2025-09-23T15:44:00.306Z"
+  },
+  {
+    "id": "8c2cc63f-df65-4767-b5af-a9e6e473b01e",
+    "auth_user_id": "aa8dc30b-33cb-4e69-80ca-cb3eb150e360",
+    "email": "test@example.com",
+    "first_name": "Test",
+    "last_name": "User",
+    "business_name": "Test User's Business",
+    "instagram_handle": "",
+    "subscription_plan": "free",
+    "instagram_connected": false,
+    "whatsapp_connected": false,
+    "automation_enabled": false,
+    "created_at": "2025-09-25T20:41:50.085Z"
   }
 ]

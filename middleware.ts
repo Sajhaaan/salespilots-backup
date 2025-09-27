@@ -1,33 +1,23 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Rate limiting store (in production, use Redis or external service)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+// Rate limiting store (in production, use Redis or similar)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
-// Define protected routes
-const protectedRoutes = [
-  '/dashboard',
-  '/admin',
-  '/api/dashboard',
-  '/api/admin',
-  '/api/user',
-  '/api/automation',
-  '/api/integrations',
-  '/api/orders',
-  '/api/products',
-  '/api/customers',
-  '/api/messages',
-  '/api/payments',
-  '/api/notifications',
-];
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100 // 100 requests per window
 
-// Define admin-only routes
-const adminRoutes = [
-  '/admin',
-  '/api/admin',
-];
+// Suspicious patterns to block
+const SUSPICIOUS_PATTERNS = [
+  /\.\./, // Directory traversal
+  /<script/i, // XSS attempts
+  /union.*select/i, // SQL injection
+  /javascript:/i, // JavaScript protocol
+  /on\w+\s*=/i, // Event handlers
+]
 
-// Define public routes
+// Public routes that don't require authentication
 const publicRoutes = [
   '/',
   '/sign-in',
@@ -43,131 +33,180 @@ const publicRoutes = [
   '/pricing',
   '/features',
   '/documentation',
+  '/careers',
   '/api/webhook',
   '/api/webhook/instagram',
   '/api/webhook/whatsapp',
-  // Allow unauthenticated start of Instagram OAuth (server endpoint itself enforces flow)
+  '/api/careers',
+  '/api/public',
+  '/api/auth/signin',
+  '/api/auth/signup',
+  '/api/auth/me',
   '/api/integrations/instagram/connect',
   '/api/integrations/instagram/callback',
+  '/api/integrations/instagram/direct-connect',
+  '/api/integrations/instagram/direct-callback',
   '/api/placeholder',
-  '/api/auth',
   '/api/test',
   '/auth-test',
   '/onboarding',
-];
+  '/quick-setup',
+  '/data-processing',
+  '/database-test',
+  '/test-buttons',
+  '/test-instagram',
+]
 
-function isProtectedRoute(pathname: string): boolean {
-  return protectedRoutes.some(route => pathname.startsWith(route));
-}
-
+// Check if route is public
 function isPublicRoute(pathname: string): boolean {
-  return publicRoutes.some(route => pathname.startsWith(route));
-}
-
-function isAdminRoute(pathname: string): boolean {
-  return adminRoutes.some(route => pathname.startsWith(route));
+  return publicRoutes.some(route => {
+    if (route.endsWith('*')) {
+      return pathname.startsWith(route.slice(0, -1))
+    }
+    return pathname === route || pathname.startsWith(route + '/')
+  })
 }
 
 // Rate limiting function
-function rateLimit(request: NextRequest): boolean {
-  const ip = request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for') || 'anonymous';
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxRequests = request.nextUrl.pathname.startsWith('/api/') ? 100 : 1000;
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const userLimit = rateLimitStore.get(ip)
 
-  const key = `${ip}:${request.nextUrl.pathname}`;
-  const record = rateLimitStore.get(key);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return true;
+  if (!userLimit || now > userLimit.resetTime) {
+    rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+    return true
   }
 
-  if (record.count >= maxRequests) {
-    return false;
+  if (userLimit.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false
   }
 
-  record.count++;
-  return true;
+  userLimit.count++
+  return true
 }
 
-// Security headers function
-function addSecurityHeaders(response: NextResponse): NextResponse {
-  // Add additional security headers for API routes
-  if (response.url.includes('/api/')) {
-    response.headers.set('X-API-Version', '1.0');
-    response.headers.set('X-Request-ID', crypto.randomUUID());
-  }
-
-  return response;
+// Check for suspicious patterns
+function hasSuspiciousPatterns(url: string, userAgent: string): boolean {
+  const fullString = `${url} ${userAgent}`.toLowerCase()
+  return SUSPICIOUS_PATTERNS.some(pattern => pattern.test(fullString))
 }
 
-// DB session cookie name (mirror of lib/auth.ts constant)
-const DB_AUTH_COOKIE = 'sp_session'
+// Get client IP
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIP = request.headers.get('x-real-ip')
+  const cfConnectingIP = request.headers.get('cf-connecting-ip')
+  
+  if (cfConnectingIP) return cfConnectingIP
+  if (realIP) return realIP
+  if (forwarded) return forwarded.split(',')[0].trim()
+  
+  return request.ip || 'unknown'
+}
 
 export function middleware(request: NextRequest) {
-  // Rate limiting check
-  if (!rateLimit(request)) {
-    return new NextResponse('Too Many Requests', { 
-      status: 429,
-      headers: {
-        'Retry-After': '900', // 15 minutes
-        'X-RateLimit-Limit': '100',
-        'X-RateLimit-Remaining': '0',
+  const { pathname } = request.nextUrl
+  const userAgent = request.headers.get('user-agent') || ''
+  const ip = getClientIP(request)
+
+  // Skip middleware for static files and Next.js internals
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/_next/') ||
+    pathname.includes('.') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/robots.txt') ||
+    pathname.startsWith('/sitemap') ||
+    pathname.startsWith('/manifest')
+  ) {
+    return NextResponse.next()
+  }
+
+  // Check for suspicious patterns
+  if (hasSuspiciousPatterns(pathname, userAgent)) {
+    console.log(`🚨 Suspicious request blocked: ${ip} - ${pathname}`)
+    return new NextResponse(
+      JSON.stringify({ 
+        error: 'Request blocked for security reasons',
+        code: 'SUSPICIOUS_REQUEST'
+      }),
+      { 
+        status: 403, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Robots-Tag': 'noindex, nofollow'
+        } 
       }
-    });
+    )
   }
 
-  // Security checks for suspicious patterns
-  const userAgent = request.headers.get('user-agent') || '';
-  const suspiciousPatterns = [
-    /bot/i,
-    /crawler/i,
-    /spider/i,
-    /scraper/i,
-  ];
-
-  const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(userAgent));
-  
-  // Allow legitimate bots but with restrictions
-  if (isSuspicious && request.nextUrl.pathname.startsWith('/api/')) {
-    return new NextResponse('Forbidden', { status: 403 });
+  // Rate limiting
+  if (!checkRateLimit(ip)) {
+    console.log(`🚨 Rate limit exceeded: ${ip} - ${pathname}`)
+    return new NextResponse(
+      JSON.stringify({ 
+        error: 'Too many requests. Please try again later.',
+        code: 'RATE_LIMIT_EXCEEDED',
+        retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000)
+      }),
+      { 
+        status: 429, 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil(RATE_LIMIT_WINDOW / 1000).toString(),
+          'X-RateLimit-Limit': RATE_LIMIT_MAX_REQUESTS.toString(),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': new Date(Date.now() + RATE_LIMIT_WINDOW).toISOString()
+        } 
+      }
+    )
   }
 
-  // Check authentication for protected routes (but allow explicitly public ones)
-  if (isProtectedRoute(request.nextUrl.pathname) && !isPublicRoute(request.nextUrl.pathname)) {
-    const token = request.cookies.get(DB_AUTH_COOKIE)?.value
+  // Check authentication for protected routes
+  if (!isPublicRoute(pathname)) {
+    const token = request.cookies.get('auth-token')?.value
+    
     if (!token) {
-      return NextResponse.redirect(new URL('/sign-in', request.url))
+      // Redirect to sign-in for protected routes
+      if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+        const signInUrl = new URL('/sign-in', request.url)
+        signInUrl.searchParams.set('redirect', pathname)
+        return NextResponse.redirect(signInUrl)
+      }
+      
+      // Return 401 for API routes
+      if (pathname.startsWith('/api/')) {
+        return new NextResponse(
+          JSON.stringify({ 
+            error: 'Authentication required',
+            code: 'UNAUTHORIZED'
+          }),
+          { 
+            status: 401, 
+            headers: { 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
   }
+
+  // Create response with security headers
+  const response = NextResponse.next()
   
-  // Check authentication for onboarding routes (they require auth but are not in protectedRoutes)
-  if (request.nextUrl.pathname.startsWith('/onboarding/')) {
-    const token = request.cookies.get(DB_AUTH_COOKIE)?.value
-    if (!token) {
-      return NextResponse.redirect(new URL('/sign-in', request.url))
-    }
+  // Security headers
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  
+  // Cache control for API routes
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
   }
 
-  // Handle CORS preflight requests
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, {
-      status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': process.env.NODE_ENV === 'production' 
-          ? 'https://salespilot-io.vercel.app' 
-          : 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '86400',
-      },
-    });
-  }
-
-  // Add security headers to response
-  const response = NextResponse.next();
-  return addSecurityHeaders(response);
+  return response
 }
 
 export const config = {
@@ -177,4 +216,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-};
+}

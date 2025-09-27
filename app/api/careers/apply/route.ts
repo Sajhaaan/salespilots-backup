@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { supabase, supabaseConfigured } from '@/lib/supabase'
 import { createClient } from '@supabase/supabase-js'
+import { SimpleDB } from '@/lib/database'
 
 // Create a service role client for admin operations
 const supabaseService = supabaseConfigured ? 
@@ -9,6 +10,9 @@ const supabaseService = supabaseConfigured ?
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   ) : null
+
+// Fallback storage for job applications
+const jobApplicationsDB = new SimpleDB('job_applications.json')
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,7 +65,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create application object
+    const applicationId = uuidv4()
     const application = {
+      id: applicationId,
       job_id: parseInt(jobId),
       job_title: jobTitle,
       first_name: firstName,
@@ -80,10 +86,12 @@ export async function POST(request: NextRequest) {
       cover_letter: coverLetter,
       resume_filename: resumeFileName,
       resume_data: resumeData,
-      status: 'pending'
+      status: 'pending',
+      applied_at: new Date().toISOString()
     }
 
-    // Save to Supabase if configured, otherwise log
+    // Save to Supabase if configured
+    let savedToSupabase = false
     if (supabaseConfigured && supabaseService) {
       try {
         const { data, error } = await supabaseService
@@ -97,10 +105,21 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('Application saved to Supabase:', data[0].id)
+        savedToSupabase = true
       } catch (error) {
         console.error('Error saving to Supabase:', error)
-        // Fall back to logging
+        // Will fall back to local storage
       }
+    }
+
+    // Always save to local fallback storage as backup
+    try {
+      const existingApplications = await jobApplicationsDB.read()
+      const updatedApplications = [...(existingApplications || []), application]
+      await jobApplicationsDB.write(updatedApplications)
+      console.log('Application saved to local storage:', applicationId)
+    } catch (error) {
+      console.error('Error saving to local storage:', error)
     }
 
     // Log the application for debugging
@@ -115,7 +134,8 @@ export async function POST(request: NextRequest) {
       { 
         success: true, 
         message: 'Application submitted successfully',
-        applicationId: uuidv4()
+        applicationId: applicationId,
+        savedToSupabase: savedToSupabase
       },
       { status: 200 }
     )

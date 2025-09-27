@@ -63,27 +63,48 @@ async function initiateInstagramOAuth() {
   try {
     const config = InstagramAuth.getConfig()
     
+    const redirectUri = `${config.redirectUri}/api/integrations/instagram/callback`
+    console.log('🔍 Instagram OAuth config check:', {
+      hasFacebookAppId: !!config.facebookAppId,
+      facebookAppId: config.facebookAppId?.substring(0, 10) + '...',
+      baseUrl: config.redirectUri,
+      redirectUri: redirectUri
+    })
+    
     if (!config.facebookAppId) {
+      console.log('❌ Facebook App ID not configured')
       return NextResponse.json({
         success: false,
         error: 'Facebook App ID not configured',
         instructions: 'Please configure FACEBOOK_APP_ID in environment variables',
-        useDemo: true
+        useDemo: true,
+        debug: {
+          hasFacebookAppId: false,
+          hasInstagramAppId: !!config.instagramAppId,
+          environment: process.env.NODE_ENV
+        }
       })
     }
 
     const authUrl = InstagramAuth.getAuthUrl()
+    console.log('✅ Instagram OAuth URL generated:', authUrl.substring(0, 50) + '...')
     
     return NextResponse.json({
       success: true,
       authUrl,
-      message: 'Instagram OAuth initiated'
+      message: 'Instagram OAuth initiated',
+      debug: {
+        hasFacebookAppId: true,
+        baseUrl: config.redirectUri,
+        redirectUri: redirectUri
+      }
     })
   } catch (error) {
     console.error('❌ Instagram OAuth initiation error:', error)
     return NextResponse.json({
       success: false,
-      error: 'Failed to initiate Instagram OAuth'
+      error: 'Failed to initiate Instagram OAuth',
+      details: error instanceof Error ? error.message : 'Unknown error'
     })
   }
 }
@@ -92,23 +113,38 @@ async function initiateInstagramOAuth() {
 async function handleInstagramOAuthCallback(code: string, userId: string) {
   try {
     console.log('🔄 Processing Instagram OAuth callback for user:', userId)
+    console.log('🔍 OAuth code received:', code.substring(0, 10) + '...')
+    
+    // Check if Facebook credentials are configured
+    const config = InstagramAuth.getConfig()
+    if (!config.facebookAppId) {
+      throw new Error('Facebook App ID not configured in environment variables')
+    }
     
     // Exchange code for access token
+    console.log('🔄 Exchanging OAuth code for access token...')
     const tokenData = await InstagramAuth.exchangeCodeForToken(code)
     console.log('✅ Token exchange successful')
     
     // Get long-lived token
+    console.log('🔄 Getting long-lived token...')
     const longLivedToken = await InstagramAuth.getLongLivedToken(tokenData.access_token)
     console.log('✅ Long-lived token obtained')
     
     // Get Instagram Business Account
+    console.log('🔄 Getting Instagram Business Account...')
     const businessAccount = await InstagramAuth.getInstagramBusinessAccount(longLivedToken.access_token)
     console.log('✅ Instagram Business Account found:', businessAccount.instagramBusinessAccountId)
     
     // Get Instagram account info
+    console.log('🔄 Getting Instagram account info...')
     const instagramInfoUrl = `https://graph.facebook.com/v18.0/${businessAccount.instagramBusinessAccountId}?fields=id,username,name&access_token=${businessAccount.pageAccessToken}`
     const instagramInfoResponse = await fetch(instagramInfoUrl)
     const instagramInfo = await instagramInfoResponse.json()
+    
+    if (instagramInfo.error) {
+      throw new Error(`Failed to get Instagram info: ${instagramInfo.error.message}`)
+    }
     
     console.log('✅ Instagram account info:', instagramInfo)
     
@@ -122,6 +158,7 @@ async function handleInstagramOAuthCallback(code: string, userId: string) {
     }
     
     // Save credentials
+    console.log('🔄 Saving Instagram credentials...')
     await InstagramAuth.saveInstagramCredentials(userId, credentials)
     console.log('✅ Instagram credentials saved for user:', userId)
     
@@ -145,7 +182,11 @@ async function handleInstagramOAuthCallback(code: string, userId: string) {
     return NextResponse.json({
       success: false,
       error: 'Failed to complete Instagram authentication',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      debug: {
+        hasFacebookAppId: !!InstagramAuth.getConfig().facebookAppId,
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown'
+      }
     }, { status: 500 })
   }
 }

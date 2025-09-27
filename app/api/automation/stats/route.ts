@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
-import { SimpleDB, usersDB, messagesDB } from '@/lib/database'
+import { ProductionDB } from '@/lib/database-production'
+import { SimpleDB, messagesDB } from '@/lib/database'
 
 // Initialize workflows database
 const workflowsDB = new SimpleDB('workflows.json')
@@ -13,13 +14,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get user's workflows and messages
     const allWorkflows = await workflowsDB.read()

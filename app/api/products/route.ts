@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
 import { SimpleDB } from '@/lib/database'
 
 // Initialize database instances
@@ -15,13 +16,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get user's products
     const allProducts = await productsDB.read()
@@ -49,13 +48,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
     const productData = await request.json()
     
     // Validate required fields
@@ -65,24 +62,53 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Validate data types and constraints
+    if (typeof productData.name !== 'string' || productData.name.trim().length === 0) {
+      return NextResponse.json({
+        error: 'Product name must be a non-empty string'
+      }, { status: 400 })
+    }
+
+    if (typeof productData.price !== 'number' || productData.price <= 0) {
+      return NextResponse.json({
+        error: 'Price must be a positive number'
+      }, { status: 400 })
+    }
+
+    if (productData.stock && (typeof productData.stock !== 'number' || productData.stock < 0)) {
+      return NextResponse.json({
+        error: 'Stock must be a non-negative number'
+      }, { status: 400 })
+    }
+
+    // Sanitize string inputs
+    const sanitizedData = {
+      ...productData,
+      name: productData.name.trim(),
+      description: (productData.description || '').trim(),
+      category: (productData.category || 'General').trim(),
+      material: (productData.material || '').trim(),
+      dimensions: (productData.dimensions || '').trim()
+    }
+
     // Create new product with comprehensive data
     const newProduct = {
       id: `PROD-${Date.now()}`,
       userId: user.id,
-      name: productData.name,
-      description: productData.description || '',
-      price: Number(productData.price),
-      category: productData.category || 'General',
-      stock: Number(productData.stock) || 0,
-      sku: productData.sku || `SKU-${Date.now()}`,
-      status: productData.status || 'active',
-      images: productData.images || [],
-      tags: Array.isArray(productData.tags) ? productData.tags : [],
-      colors: Array.isArray(productData.colors) ? productData.colors : [],
-      sizes: Array.isArray(productData.sizes) ? productData.sizes : [],
-      material: productData.material || '',
-      weight: productData.weight || 0,
-      dimensions: productData.dimensions || '',
+      name: sanitizedData.name,
+      description: sanitizedData.description,
+      price: Number(sanitizedData.price),
+      category: sanitizedData.category,
+      stock: Number(sanitizedData.stock) || 0,
+      sku: sanitizedData.sku || `SKU-${Date.now()}`,
+      status: sanitizedData.status || 'active',
+      images: Array.isArray(sanitizedData.images) ? sanitizedData.images : [],
+      tags: Array.isArray(sanitizedData.tags) ? sanitizedData.tags : [],
+      colors: Array.isArray(sanitizedData.colors) ? sanitizedData.colors : [],
+      sizes: Array.isArray(sanitizedData.sizes) ? sanitizedData.sizes : [],
+      material: sanitizedData.material,
+      weight: Number(sanitizedData.weight) || 0,
+      dimensions: sanitizedData.dimensions,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -118,13 +144,29 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Validate ID format
+    if (typeof id !== 'string' || id.trim().length === 0) {
+      return NextResponse.json({ error: 'Invalid product ID format' }, { status: 400 })
+    }
+
+    // Validate update data if provided
+    if (updateData.name && (typeof updateData.name !== 'string' || updateData.name.trim().length === 0)) {
+      return NextResponse.json({ error: 'Product name must be a non-empty string' }, { status: 400 })
+    }
+
+    if (updateData.price && (typeof updateData.price !== 'number' || updateData.price <= 0)) {
+      return NextResponse.json({ error: 'Price must be a positive number' }, { status: 400 })
+    }
+
+    if (updateData.stock && (typeof updateData.stock !== 'number' || updateData.stock < 0)) {
+      return NextResponse.json({ error: 'Stock must be a non-negative number' }, { status: 400 })
+    }
+
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get all products and find the one to update
     const allProducts = await productsDB.read()
@@ -173,13 +215,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Validate ID format
+    if (typeof id !== 'string' || id.trim().length === 0) {
+      return NextResponse.json({ error: 'Invalid product ID format' }, { status: 400 })
+    }
+
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get all products and find the one to delete
     const allProducts = await productsDB.read()

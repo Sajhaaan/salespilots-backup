@@ -33,6 +33,22 @@ interface StoreDetails {
 }
 
 export default function AISetupPage() {
+  // AI Setup page is temporarily hidden
+  return (
+    <div className="p-6 pb-20 max-w-7xl mx-auto">
+      <div className="premium-card text-center py-12">
+        <h1 className="text-2xl font-bold text-white mb-4">AI Setup</h1>
+        <p className="text-white/60 mb-6">Configure your AI settings and test responses.</p>
+        <button 
+          onClick={() => window.history.back()}
+          className="btn-premium px-6 py-3"
+        >
+          Go Back
+        </button>
+      </div>
+    </div>
+  )
+
   const [aiStatus, setAiStatus] = useState<AIStatus | null>(null)
   const [storeDetails, setStoreDetails] = useState<StoreDetails | null>(null)
   const [testMessage, setTestMessage] = useState('')

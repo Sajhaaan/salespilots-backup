@@ -18,7 +18,8 @@ import {
   HelpCircle,
   Plus,
   BarChart3,
-  Brain
+  Brain,
+  Upload
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ChatbotWidget from '@/components/ChatbotWidget'
@@ -28,8 +29,9 @@ const navigation = [
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag, color: 'emerald' },
   { name: 'Products', href: '/dashboard/products', icon: Package, color: 'purple' },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCard, color: 'orange' },
+      { name: 'QR & UPI Setup', href: '/dashboard/payment-upload', icon: Upload, color: 'green' },
   { name: 'Automation', href: '/dashboard/automation', icon: Zap, color: 'pink' },
-  { name: 'AI Setup', href: '/dashboard/ai-setup', icon: Brain, color: 'indigo' },
+  // { name: 'AI Setup', href: '/dashboard/ai-setup', icon: Brain, color: 'indigo' }, // temporarily hidden
   { name: 'Integrations', href: '/dashboard/integrations', icon: Plus, color: 'cyan' },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, color: 'gray' },
 ]
@@ -46,6 +48,7 @@ export default function DashboardLayout({
   const [chatbotOpen, setChatbotOpen] = useState(false)
   const [dbUser, setDbUser] = useState<{ id: string; email: string } | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [headerStats, setHeaderStats] = useState<{ revenue: string; orders: number } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -56,14 +59,16 @@ export default function DashboardLayout({
         if (!mounted) return
         if (res?.ok && res?.user) {
           setDbUser(res.user)
+          // Fetch header stats after user is authenticated
+          fetchHeaderStats()
         } else {
           setDbUser(null)
-          router.replace('/')
+          router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
         }
       })
       .catch(() => {
         setDbUser(null)
-        router.replace('/')
+        router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
       })
       .finally(() => {
         if (mounted) setAuthLoading(false)
@@ -72,6 +77,46 @@ export default function DashboardLayout({
       mounted = false
     }
   }, [router])
+
+  const fetchHeaderStats = async () => {
+    try {
+      const response = await fetch('/api/dashboard/stats', { 
+        credentials: 'include', 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        setHeaderStats({
+          revenue: `₹${(data.stats.totalRevenue / 1000).toFixed(1)}K`,
+          orders: data.stats.totalOrders
+        })
+      } else {
+        // Set default values if API fails
+        setHeaderStats({
+          revenue: '₹0.0K',
+          orders: 0
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch header stats:', error)
+      // Set default values on error
+      setHeaderStats({
+        revenue: '₹0.0K',
+        orders: 0
+      })
+    }
+  }
+
+  // Refresh function that can be called from child components
+  const refreshData = () => {
+    fetchHeaderStats()
+  }
 
   // Close mobile user menu when clicking outside
   useEffect(() => {
@@ -206,28 +251,11 @@ export default function DashboardLayout({
                     
                     try {
                       console.log('🔴 LOGOUT: Starting logout process...')
-                      
-                      // Clear local state first for immediate feedback
-                      setDbUser(null)
-                      setSidebarOpen(false)
-                      
-                      // Call logout API
-                      const response = await fetch('/api/auth/signout', { 
-                        method: 'POST',
-                        credentials: 'include'
-                      })
-                      
-                      console.log('🔴 LOGOUT: API Response:', response.status)
-                      
-                      // Redirect to home landing page
-                      window.location.href = '/'
-                      
+                      await signOut()
+                      router.push('/')
                     } catch (error) {
                       console.error('🔴 LOGOUT ERROR:', error)
-                      // Force logout even if API fails
-                      setDbUser(null)
-                      setSidebarOpen(false)
-                      window.location.href = '/'
+                      router.push('/')
                     } finally {
                       // Reset button state
                       button.style.opacity = '1'
@@ -281,12 +309,16 @@ export default function DashboardLayout({
                 <div className="hidden md:flex items-center space-x-4 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
                   <div className="text-center">
                     <p className="text-xs text-white/60">Revenue</p>
-                    <p className="text-sm font-bold text-green-400">₹45.2K</p>
+                    <p className="text-sm font-bold text-green-400">
+                      {headerStats ? headerStats.revenue : '--'}
+                    </p>
                   </div>
                   <div className="w-px h-8 bg-white/20"></div>
                   <div className="text-center">
                     <p className="text-xs text-white/60">Orders</p>
-                    <p className="text-sm font-bold text-blue-400">127</p>
+                    <p className="text-sm font-bold text-blue-400">
+                      {headerStats ? headerStats.orders : '--'}
+                    </p>
                   </div>
                 </div>
 

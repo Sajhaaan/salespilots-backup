@@ -22,6 +22,8 @@ import {
   FileText
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 interface Order {
   id: string
@@ -174,12 +176,12 @@ export default function OrdersPage() {
                         a.click()
                         window.URL.revokeObjectURL(url)
                         document.body.removeChild(a)
-                        alert('Orders exported as JSON successfully!')
+                        toast.success('Orders exported as JSON successfully!')
                       } else {
-                        alert('Failed to export orders')
+                        toast.error('Failed to export orders')
                       }
                     } catch (error) {
-                      alert('Failed to export orders')
+                      toast.error('Failed to export orders')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -201,10 +203,10 @@ export default function OrdersPage() {
                         const { exportOrdersAsCSV } = await import('@/lib/csv-export')
                         exportOrdersAsCSV(data.data.orders, `orders_report_${new Date().toISOString().split('T')[0]}.csv`)
                       } else {
-                        alert('Failed to export orders')
+                        toast.error('Failed to export orders')
                       }
                     } catch (error) {
-                      alert('Failed to export orders')
+                      toast.error('Failed to export orders')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -216,11 +218,11 @@ export default function OrdersPage() {
             </div>
           </div>
           <button 
-            onClick={() => alert('New Order functionality will be implemented soon!')}
+            onClick={() => router.push('/dashboard/products')}
             className="btn-premium px-4 py-2 text-sm"
           >
             <Plus className="w-4 h-4 mr-2" />
-            New Order
+            Add Product
           </button>
         </div>
       </div>
@@ -258,18 +260,18 @@ export default function OrdersPage() {
 
           <div className="flex items-center space-x-2">
             <button 
-              onClick={() => alert('More filters functionality will be implemented soon!')}
+              onClick={() => setSearchTerm('')}
               className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white"
             >
               <Filter className="w-4 h-4 mr-2" />
-              More Filters
+              Clear Filters
             </button>
             <button 
-              onClick={() => alert('Date range picker functionality will be implemented soon!')}
+              onClick={() => fetchOrders()}
               className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white"
             >
               <Calendar className="w-4 h-4 mr-2" />
-              Date Range
+              Refresh
             </button>
           </div>
         </div>

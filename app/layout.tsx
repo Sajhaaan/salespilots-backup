@@ -35,24 +35,11 @@ const albertSans = Albert_Sans({
   variable: '--font-albert',
 })
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' }
-  ],
-}
-
 export const metadata: Metadata = {
-  metadataBase: new URL('https://salespilots.io'),
-  title: {
-    default: 'SalesPilots - AI-Powered Instagram Business Automation Platform',
-    template: '%s | SalesPilots'
-  },
+  title: 'SalesPilots - AI-Powered Instagram Business Automation Platform',
   description: 'Transform your Instagram business with AI-powered automation that handles customer interactions, verifies payments, and manages orders in Indian languages. Trusted by 10,000+ businesses.',
+  authors: [{ name: 'SalesPilots Technologies Pvt. Ltd.' }],
+  manifest: '/site.webmanifest',
   keywords: [
     'Instagram automation',
     'AI chatbot India',
@@ -70,14 +57,21 @@ export const metadata: Metadata = {
     'customer service automation',
     'e-commerce automation'
   ],
-  authors: [{ name: 'SalesPilots Technologies Pvt. Ltd.' }],
   creator: 'SalesPilots Technologies Pvt. Ltd.',
   publisher: 'SalesPilots Technologies Pvt. Ltd.',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
+  category: 'technology',
+  classification: 'business automation',
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -87,11 +81,11 @@ export const metadata: Metadata = {
     description: 'Automate your Instagram business with AI that speaks your customers\' language. Handle DMs, verify payments, and process orders 24/7 in Hindi, Tamil, Manglish & more.',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://salespilots.io/og-image.png',
         width: 1200,
         height: 630,
         alt: 'SalesPilots - AI Instagram Automation Platform',
-      }
+      },
     ],
   },
   twitter: {
@@ -100,20 +94,7 @@ export const metadata: Metadata = {
     creator: '@salespilots_io',
     title: 'SalesPilots - AI Instagram Automation for Indian Businesses',
     description: 'Replace expensive employees with AI automation. Handle customer interactions, verify payments & process orders in local languages.',
-    images: ['/twitter-image.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    nocache: false,
-    googleBot: {
-      index: true,
-      follow: true,
-      noimageindex: false,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
+    images: ['https://salespilots.io/twitter-image.png'],
   },
   icons: {
     icon: [
@@ -129,22 +110,26 @@ export const metadata: Metadata = {
       { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
   },
-  manifest: '/site.webmanifest',
-  verification: {
-    google: 'your-google-verification-code',
-    yandex: 'your-yandex-verification-code',
-    yahoo: 'your-yahoo-verification-code',
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'SalesPilots',
+    'application-name': 'SalesPilots',
+    'msapplication-TileColor': '#0f172a',
+    'theme-color': '#0f172a',
   },
-  alternates: {
-    canonical: 'https://salespilots.io',
-    languages: {
-      'en-IN': 'https://salespilots.io',
-      'hi-IN': 'https://salespilots.io/hi',
-      'ta-IN': 'https://salespilots.io/ta',
-    },
-  },
-  category: 'technology',
-  classification: 'business automation',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',

@@ -1,0 +1,25 @@
+[
+  {
+    "id": "bae9c6b7-3cc0-46cb-b61b-10ad18701c05",
+    "job_id": 1,
+    "job_title": "Senior NLP Engineer (ESOP Only)",
+    "first_name": "Local",
+    "last_name": "Test",
+    "email": "local.test@example.com",
+    "phone": "+1234567890",
+    "location": "Local City",
+    "experience": "2+ years",
+    "education": "Bachelor of Science",
+    "current_company": null,
+    "expected_salary": null,
+    "notice_period": null,
+    "portfolio": null,
+    "linkedin": null,
+    "github": null,
+    "cover_letter": "Testing local development server",
+    "resume_filename": null,
+    "resume_data": null,
+    "status": "pending",
+    "applied_at": "2025-09-26T12:44:15.450Z"
+  }
+]

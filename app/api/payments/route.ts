@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
 import { SimpleDB } from '@/lib/database'
 
 // Initialize database instances
@@ -79,13 +80,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get payments for this user
     let payments = await paymentsDB.findBy('userId', user.id)
@@ -122,13 +121,11 @@ export async function POST(request: NextRequest) {
 
     const { orderId, customerName, amount, paymentMethod, paymentProvider, transactionId, screenshotUrl, notes } = await request.json()
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Create new payment record
     const newPayment = await paymentsDB.create({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
 import { usersDB } from '@/lib/database'
 import OpenAI from 'openai'
 
@@ -22,13 +23,11 @@ export async function POST(request: NextRequest) {
       }, { status: 503 })
     }
 
-    // Find user profile with store details
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
+    // Find user profile with store details using ProductionDB
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     if (!user.storeSetupCompleted) {
       return NextResponse.json({ 

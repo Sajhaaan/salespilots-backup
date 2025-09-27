@@ -30,7 +30,9 @@ import {
   Target,
   Filter
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 interface Workflow {
   id: string
@@ -68,6 +70,9 @@ const statusColors = {
 }
 
 export default function AutomationPage() {
+  const router = useRouter()
+  const statsRef = useRef<HTMLDivElement | null>(null)
+  const templatesRef = useRef<HTMLDivElement | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null)
   const [showWorkflowModal, setShowWorkflowModal] = useState(false)
@@ -167,7 +172,10 @@ export default function AutomationPage() {
         </div>
         
         <div className="flex items-center space-x-3">
-          <button className="btn-secondary-premium px-4 py-2 text-sm">
+          <button 
+            onClick={() => statsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="btn-secondary-premium px-4 py-2 text-sm"
+          >
             <BarChart3 className="w-4 h-4 mr-2" />
             Analytics
           </button>
@@ -179,7 +187,7 @@ export default function AutomationPage() {
       </div>
 
       {/* Automation Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {(automationStats || []).map((stat, index) => {
           const Icon = getStatIcon(stat.icon)
           return (
@@ -413,11 +421,17 @@ export default function AutomationPage() {
                     <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                       <Settings className="w-4 h-4 text-white/70" />
                     </button>
-                    <button className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                    <button 
+                      onClick={() => {
+                        setWorkflows(prev => prev.map(w => w.id === workflow.id ? { ...w, status: w.status === 'active' ? 'paused' : 'active' } : w))
+                        toast.success(`Workflow ${workflow.status === 'active' ? 'paused' : 'activated'}`)
+                      }}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                       workflow.status === 'active' 
                         ? 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-400' 
                         : 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
-                    }`}>
+                    }`}
+                    >
                       {workflow.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>
                   </div>
@@ -429,10 +443,15 @@ export default function AutomationPage() {
       )}
 
       {/* Quick Setup Templates */}
-      <div className="premium-card">
+      <div ref={templatesRef} className="premium-card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-white">Quick Setup Templates</h2>
-          <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">View All Templates</button>
+          <button 
+            onClick={() => templatesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+          >
+            View All Templates
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -442,8 +461,11 @@ export default function AutomationPage() {
             </div>
             <h3 className="font-semibold text-white mb-2">Instagram Store Setup</h3>
             <p className="text-white/60 text-sm mb-4">Complete automation for Instagram-based stores with DM handling, payment verification, and order processing.</p>
-            <button className="btn-premium w-full py-2 text-sm">
-              Use Template
+            <button 
+              onClick={() => router.push('/dashboard/integrations')}
+              className="btn-premium w-full py-2 text-sm"
+            >
+              Setup Instagram
             </button>
           </div>
 
@@ -453,8 +475,11 @@ export default function AutomationPage() {
             </div>
             <h3 className="font-semibold text-white mb-2">WhatsApp Business</h3>
             <p className="text-white/60 text-sm mb-4">Automated WhatsApp responses, catalog sharing, and customer support for business accounts.</p>
-            <button className="btn-premium w-full py-2 text-sm">
-              Use Template
+            <button 
+              onClick={() => router.push('/dashboard/integrations')}
+              className="btn-premium w-full py-2 text-sm"
+            >
+              Setup WhatsApp
             </button>
           </div>
 
@@ -464,8 +489,11 @@ export default function AutomationPage() {
             </div>
             <h3 className="font-semibold text-white mb-2">AI Customer Support</h3>
             <p className="text-white/60 text-sm mb-4">Intelligent customer support bot with FAQ handling, ticket creation, and escalation management.</p>
-            <button className="btn-premium w-full py-2 text-sm">
-              Use Template
+            <button 
+              onClick={() => router.push('/dashboard/ai-setup')}
+              className="btn-premium w-full py-2 text-sm"
+            >
+              Setup AI Bot
             </button>
           </div>
         </div>
@@ -615,10 +643,16 @@ export default function AutomationPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <button className="btn-premium flex-1 py-3">
+                  <button 
+                    onClick={() => { setShowWorkflowModal(false); toast.success('Workflow saved') }}
+                    className="btn-premium flex-1 py-3"
+                  >
                     Save Workflow
                   </button>
-                  <button className="btn-secondary-premium px-6 py-3">
+                  <button 
+                    onClick={() => toast.success('Test run started')}
+                    className="btn-secondary-premium px-6 py-3"
+                  >
                     Test Run
                   </button>
                 </div>

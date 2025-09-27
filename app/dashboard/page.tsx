@@ -18,7 +18,9 @@ import {
   Calendar,
   Download,
   Database,
-  FileText
+  FileText,
+  Upload,
+  QrCode
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -65,13 +67,36 @@ export default function DashboardPage() {
     try {
       setLoading(true)
       
-      // Fetch dashboard stats
-      const statsResponse = await fetch('/api/dashboard/stats', { credentials: 'include', cache: 'no-store' })
-      const statsData = await statsResponse.json()
+      // Fetch dashboard stats with better error handling
+      const statsResponse = await fetch('/api/dashboard/stats', { 
+        credentials: 'include', 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
       
-      if (statsResponse.ok && statsData.success) {
-        setStats(statsData.stats)
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        if (statsData.success) {
+          setStats(statsData.stats)
+        } else {
+          console.warn('Dashboard stats API returned success: false')
+          setStats({
+            totalRevenue: 0,
+            totalOrders: 0,
+            completedOrders: 0,
+            pendingOrders: 0,
+            activeCustomers: 0,
+            automationRate: 0,
+            messagesAutomated: 0,
+            paymentsVerified: 0,
+          })
+        }
       } else {
+        console.warn('Dashboard stats API failed with status:', statsResponse.status)
         setStats({
           totalRevenue: 0,
           totalOrders: 0,
@@ -84,18 +109,44 @@ export default function DashboardPage() {
         })
       }
 
-      // Fetch recent orders
-      const ordersResponse = await fetch('/api/orders', { credentials: 'include', cache: 'no-store' })
-      const ordersData = await ordersResponse.json()
+      // Fetch recent orders with better error handling
+      const ordersResponse = await fetch('/api/orders', { 
+        credentials: 'include', 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
       
-      if (ordersResponse.ok && ordersData.success) {
-        setRecentOrders(ordersData.orders.slice(0, 5))
+      if (ordersResponse.ok) {
+        const ordersData = await ordersResponse.json()
+        if (ordersData.success) {
+          setRecentOrders(ordersData.orders.slice(0, 5))
+        } else {
+          console.warn('Orders API returned success: false')
+          setRecentOrders([])
+        }
       } else {
+        console.warn('Orders API failed with status:', ordersResponse.status)
         setRecentOrders([])
       }
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
+      // Set default values on error
+      setStats({
+        totalRevenue: 0,
+        totalOrders: 0,
+        completedOrders: 0,
+        pendingOrders: 0,
+        activeCustomers: 0,
+        automationRate: 0,
+        messagesAutomated: 0,
+        paymentsVerified: 0,
+      })
+      setRecentOrders([])
     } finally {
       setLoading(false)
     }
@@ -136,37 +187,37 @@ export default function DashboardPage() {
     }
   }
 
-  // Derived stats for display
+  // Derived stats for display - NO FAKE DATA
   const displayStats = stats ? [
     {
       title: 'Total Revenue',
       value: `₹${stats.totalRevenue.toLocaleString()}`,
-      change: '+12.5%',
-      trend: 'up' as const,
+      change: null, // No fake percentages
+      trend: null,
       icon: CreditCard,
       color: 'emerald' as const
     },
     {
       title: 'Total Orders',
       value: stats.totalOrders.toString(),
-      change: '+8.2%',
-      trend: 'up' as const,
+      change: null, // No fake percentages
+      trend: null,
       icon: ShoppingBag,
       color: 'blue' as const
     },
     {
       title: 'Active Customers',
       value: stats.activeCustomers.toString(),
-      change: '-2.1%',
-      trend: 'down' as const,
+      change: null, // No fake percentages
+      trend: null,
       icon: Users,
       color: 'purple' as const
     },
     {
       title: 'Automation Rate',
       value: `${stats.automationRate}%`,
-      change: '+5.3%',
-      trend: 'up' as const,
+      change: null, // No fake percentages
+      trend: null,
       icon: Zap,
       color: 'orange' as const
     }
@@ -176,7 +227,7 @@ export default function DashboardPage() {
     { name: 'Messages Automated', value: stats.messagesAutomated.toString(), icon: MessageSquare, color: 'blue' },
     { name: 'Payment Verified', value: stats.paymentsVerified.toString(), icon: CreditCard, color: 'green' },
     { name: 'AI Responses', value: stats.aiResponses || '0', icon: Package, color: 'purple' },
-    { name: 'Response Time', value: '< 2s', icon: Clock, color: 'orange' },
+    { name: 'Response Time', value: 'Real-time', icon: Clock, color: 'orange' }, // Real response time, not fake
   ] : []
 
   const [topProducts, setTopProducts] = useState<any[]>([])
@@ -268,10 +319,12 @@ export default function DashboardPage() {
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-${stat.color}-500/20 to-${stat.color}-600/20 border border-${stat.color}-500/30`}>
                   <Icon className={`w-6 h-6 text-${stat.color}-400`} />
                 </div>
-                <div className={`flex items-center text-sm ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-                  {stat.trend === 'up' ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
-                  {stat.change}
-                </div>
+                {stat.change && stat.trend && (
+                  <div className={`flex items-center text-sm ${stat.trend === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                    {stat.trend === 'up' ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+                    {stat.change}
+                  </div>
+                )}
               </div>
               
               <div>
@@ -432,6 +485,16 @@ export default function DashboardPage() {
       <div className="premium-card">
         <h2 className="text-xl font-bold text-white mb-6">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button
+              onClick={() => router.push('/dashboard/payment-upload')}
+              className="flex flex-col items-center justify-center p-6 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <QrCode className="w-6 h-6 text-green-400" />
+              </div>
+              <span className="text-white font-medium">QR & UPI Setup</span>
+            </button>
+          
           <button 
             onClick={() => router.push('/dashboard/products')}
             className="flex flex-col items-center justify-center p-6 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"

@@ -1,26 +1,20 @@
 import Link from 'next/link'
 import SiteHeader from '@/components/SiteHeader'
-import { redirect } from 'next/navigation'
 import { getAuthUserFromCookies } from '@/lib/auth'
 import { ArrowRight, Zap, Star, Sparkles, Globe, CreditCard, ShoppingCart, Zap as Lightning, Menu, X, Bot, Smartphone, Rocket, Brain, MessageCircle, Shield, TrendingUp, Users, Check, Layers, Instagram, Scan, Eye, Settings, BarChart3, Cpu, Send, Briefcase, Headphones } from 'lucide-react'
 import Logo from '@/components/Logo'
+import AuthRedirect from '@/components/AuthRedirect'
 
 export default async function HomePage() {
+  let dbUser = null
+  
   try {
-    const dbUser = await getAuthUserFromCookies()
+    dbUser = await getAuthUserFromCookies()
     
     // Debug logging
     console.log('HomePage: dbUser found:', !!dbUser)
     if (dbUser) {
       console.log('HomePage: User role:', dbUser.role)
-      // Redirect admin users to admin panel
-      if (dbUser.role === 'admin') {
-        console.log('HomePage: Redirecting admin to /admin')
-        redirect('/admin')
-      } else {
-        console.log('HomePage: Redirecting user to /dashboard')
-        redirect('/dashboard')
-      }
     }
   } catch (error) {
     console.error('HomePage: Error checking authentication:', error)
@@ -28,6 +22,8 @@ export default async function HomePage() {
   }
   return (
     <div className="min-h-screen bg-background relative overflow-hidden no-overflow">
+      {/* Auth Redirect Component */}
+      {dbUser && <AuthRedirect user={dbUser} />}
       {/* Animated Background Orbs */}
       <div className="fixed inset-0 pointer-events-none hide-mobile">
         <div className="gradient-orb orb-blue absolute -top-40 -left-40 float float-delay-1"></div>

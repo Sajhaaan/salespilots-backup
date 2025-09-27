@@ -25,6 +25,8 @@ import {
   MessageSquare
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 interface Payment {
   id: string
@@ -62,6 +64,7 @@ const paymentMethods = {
 }
 
 export default function PaymentsPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [methodFilter, setMethodFilter] = useState('all')
@@ -144,7 +147,7 @@ export default function PaymentsPage() {
         
         <div className="flex items-center space-x-3">
           <button 
-            onClick={() => alert('Upload receipt functionality will be implemented soon!')}
+            onClick={() => router.push('/dashboard/payment-upload')}
             className="btn-secondary-premium px-4 py-2 text-sm"
           >
             <Upload className="w-4 h-4 mr-2" />
@@ -177,12 +180,12 @@ export default function PaymentsPage() {
                         a.click()
                         window.URL.revokeObjectURL(url)
                         document.body.removeChild(a)
-                        alert('Payments exported as JSON successfully!')
+                        toast.success('Payments exported as JSON successfully!')
                       } else {
-                        alert('Failed to export payments')
+                        toast.error('Failed to export payments')
                       }
                     } catch (error) {
-                      alert('Failed to export payments')
+                      toast.error('Failed to export payments')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -204,10 +207,10 @@ export default function PaymentsPage() {
                         const { exportPaymentsAsCSV } = await import('@/lib/csv-export')
                         exportPaymentsAsCSV(data.data.payments, `payments_report_${new Date().toISOString().split('T')[0]}.csv`)
                       } else {
-                        alert('Failed to export payments')
+                        toast.error('Failed to export payments')
                       }
                     } catch (error) {
-                      alert('Failed to export payments')
+                      toast.error('Failed to export payments')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -219,11 +222,11 @@ export default function PaymentsPage() {
             </div>
           </div>
           <button 
-            onClick={() => alert('AI verification functionality will be implemented soon!')}
+            onClick={() => router.push('/dashboard/payment-upload')}
             className="btn-premium px-4 py-2 text-sm"
           >
             <Zap className="w-4 h-4 mr-2" />
-            AI Verify
+            Setup Payment
           </button>
         </div>
       </div>
@@ -383,13 +386,23 @@ export default function PaymentsPage() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <button className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white">
+            <button 
+              onClick={() => {
+                setSearchTerm('')
+                setStatusFilter('all')
+                setMethodFilter('all')
+              }}
+              className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white"
+            >
               <Filter className="w-4 h-4 mr-2" />
-              More Filters
+              Clear Filters
             </button>
-            <button className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white">
+            <button 
+              onClick={() => fetchPayments()}
+              className="flex items-center px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white/70 hover:text-white"
+            >
               <Calendar className="w-4 h-4 mr-2" />
-              Date Range
+              Refresh
             </button>
           </div>
         </div>

@@ -91,8 +91,17 @@ CREATE TABLE IF NOT EXISTS products (
     category VARCHAR(100),
     tags TEXT[],
     images TEXT[],
+    image_urls TEXT[],
+    instagram_post_url TEXT,
+    sku VARCHAR(100),
+    colors TEXT[],
+    sizes TEXT[],
+    material VARCHAR(100),
+    weight DECIMAL(8,2),
+    dimensions VARCHAR(100),
     in_stock BOOLEAN DEFAULT TRUE,
     stock_quantity INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -101,15 +110,22 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+    order_number VARCHAR(50) UNIQUE NOT NULL,
     customer_name VARCHAR(255) NOT NULL,
     customer_email VARCHAR(255),
     customer_phone VARCHAR(20),
     customer_address TEXT,
+    shipping_address TEXT,
     total_amount DECIMAL(10,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'INR',
-    status VARCHAR(50) DEFAULT 'pending',
-    payment_status VARCHAR(50) DEFAULT 'pending',
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
+    payment_status VARCHAR(50) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
     payment_method VARCHAR(50),
+    payment_id VARCHAR(255),
+    razorpay_order_id VARCHAR(255),
+    instagram_user_id VARCHAR(255),
+    metadata JSONB,
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -188,6 +204,32 @@ CREATE TABLE IF NOT EXISTS user_activity (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Job Applications table
+CREATE TABLE IF NOT EXISTS job_applications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    job_id INTEGER NOT NULL,
+    job_title VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    location VARCHAR(255),
+    experience TEXT,
+    education TEXT,
+    current_company VARCHAR(255),
+    expected_salary VARCHAR(100),
+    notice_period VARCHAR(100),
+    portfolio TEXT,
+    linkedin TEXT,
+    github TEXT,
+    cover_letter TEXT,
+    resume_filename VARCHAR(255),
+    resume_data TEXT,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'shortlisted', 'rejected', 'hired')),
+    applied_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_auth_users_email ON auth_users(email);
 CREATE INDEX IF NOT EXISTS idx_users_auth_user_id ON users(auth_user_id);
@@ -204,6 +246,9 @@ CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_platform_message_id ON messages(platform_message_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id);
+CREATE INDEX IF NOT EXISTS idx_job_applications_email ON job_applications(email);
+CREATE INDEX IF NOT EXISTS idx_job_applications_status ON job_applications(status);
+CREATE INDEX IF NOT EXISTS idx_job_applications_applied_at ON job_applications(applied_at);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -224,6 +269,7 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXE
 CREATE TRIGGER update_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_messages_updated_at BEFORE UPDATE ON messages FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_job_applications_updated_at BEFORE UPDATE ON job_applications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert default admin user (password: admin123)
 INSERT INTO auth_users (id, email, password_hash, first_name, last_name, email_verified, role) 

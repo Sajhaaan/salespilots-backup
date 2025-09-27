@@ -15,9 +15,14 @@ async function getOpenAIConfig() {
 }
 
 // Get OpenAI instance with saved configuration
-async function getOpenAIInstance() {
+export async function getOpenAIInstance() {
   const config = await getOpenAIConfig()
   const apiKey = config?.apiKey || process.env.OPENAI_API_KEY || 'dummy-key'
+  
+  // Check if we have a valid API key
+  if (!apiKey || apiKey === 'dummy-key') {
+    console.warn('⚠️ OpenAI API key not configured - AI features will be limited')
+  }
   
   return new OpenAI({
     apiKey: apiKey,
@@ -27,7 +32,8 @@ async function getOpenAIInstance() {
 // Check if OpenAI is properly configured
 export async function isOpenAIConfigured(): Promise<boolean> {
   const config = await getOpenAIConfig()
-  return config?.apiKey && config.status === 'connected'
+  const apiKey = config?.apiKey || process.env.OPENAI_API_KEY
+  return !!(apiKey && apiKey !== 'dummy-key' && config?.status === 'connected')
 }
 
 // AI-powered Instagram DM responder with fine-tuning support
@@ -88,6 +94,17 @@ RESPONSE STYLE:
     }
   } catch (error) {
     console.error('OpenAI DM Response Error:', error)
+    
+    // Check if it's an API key issue
+    const isConfigured = await isOpenAIConfigured()
+    if (!isConfigured) {
+      return {
+        response: "AI features are not configured yet. Please contact support to set up AI responses! 🤖",
+        category: 'support',
+        language: 'english'
+      }
+    }
+    
     return {
       response: "Sorry, I'm having technical issues. Please try again in a moment! 🙏",
       category: 'support',

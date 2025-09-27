@@ -636,12 +636,12 @@ export default function ProductsPage() {
                         a.click()
                         window.URL.revokeObjectURL(url)
                         document.body.removeChild(a)
-                        alert('Products exported as JSON successfully!')
+                        toast.success('Products exported as JSON successfully!')
                       } else {
-                        alert('Failed to export products')
+                        toast.error('Failed to export products')
                       }
                     } catch (error) {
-                      alert('Failed to export products')
+                      toast.error('Failed to export products')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"
@@ -663,10 +663,10 @@ export default function ProductsPage() {
                         const { exportProductsAsCSV } = await import('@/lib/csv-export')
                         exportProductsAsCSV(data.data.products, `products_report_${new Date().toISOString().split('T')[0]}.csv`)
                       } else {
-                        alert('Failed to export products')
+                        toast.error('Failed to export products')
                       }
                     } catch (error) {
-                      alert('Failed to export products')
+                      toast.error('Failed to export products')
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-white/80 hover:text-white hover:bg-white/10 transition-colors flex items-center"

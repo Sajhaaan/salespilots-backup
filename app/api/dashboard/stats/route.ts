@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUserFromRequest } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
 import { SimpleDB } from '@/lib/database'
 
 // Initialize database instances
@@ -16,19 +17,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
+    // Get user profile using ProductionDB
+    const dbUser = await ProductionDB.findUserByAuthId(authUser.id)
     
-    if (users.length === 0) {
+    if (!dbUser) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
     // Get all data for this user
-    const userOrders = await ordersDB.findBy('userId', user.id)
-    const userMessages = await messagesDB.findBy('userId', user.id)
-    const userPayments = await paymentsDB.findBy('userId', user.id)
+    const userOrders = await ordersDB.findBy('userId', dbUser.id)
+    const userMessages = await messagesDB.findBy('userId', dbUser.id)
+    const userPayments = await paymentsDB.findBy('userId', dbUser.id)
 
     // Calculate overall statistics
     const deliveredOrders = userOrders.filter((o: any) => o.status === 'delivered')
