@@ -23,6 +23,8 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 const pricingPlans = [
   {
@@ -179,8 +181,59 @@ const faqs = [
 ]
 
 export default function PricingPage() {
+  const router = useRouter()
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState<string | null>(null)
+
+  const handlePlanSelection = async (planName: string, period: string) => {
+    if (planName === 'enterprise') {
+      router.push('/contact')
+      return
+    }
+
+    setIsLoading(planName)
+    
+    try {
+      // Check if user is logged in
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        // User not logged in, redirect to sign up
+        router.push(`/sign-up?plan=${planName}&billing=${period}`)
+        return
+      }
+
+      // User is logged in, create subscription
+      const subscriptionResponse = await fetch('/api/subscriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          plan: planName,
+          billingPeriod: period
+        })
+      })
+
+      const data = await subscriptionResponse.json()
+
+      if (data.success) {
+        // Redirect to payment page
+        window.location.href = data.paymentLink
+      } else {
+        toast.error(data.error || 'Failed to create subscription')
+      }
+    } catch (error) {
+      console.error('Plan selection error:', error)
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -342,16 +395,17 @@ export default function PricingPage() {
                     </div>
                   )}
 
-                  <Link 
-                    href={plan.name === "Enterprise" ? "/contact" : "/sign-up"}
-                    className={`w-full text-center py-4 rounded-xl font-semibold transition-all block ${
+                  <button 
+                    onClick={() => handlePlanSelection(plan.name.toLowerCase(), billingPeriod)}
+                    disabled={isLoading === plan.name.toLowerCase()}
+                    className={`w-full text-center py-4 rounded-xl font-semibold transition-all ${
                       plan.popular 
                         ? 'btn-premium' 
                         : 'btn-secondary-premium'
-                    }`}
+                    } ${isLoading === plan.name.toLowerCase() ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {plan.cta}
-                  </Link>
+                    {isLoading === plan.name.toLowerCase() ? 'Processing...' : plan.cta}
+                  </button>
 
                   <div className="mt-4 text-center">
                     <span className="text-white/60 text-sm">14-day free trial • No credit card required</span>

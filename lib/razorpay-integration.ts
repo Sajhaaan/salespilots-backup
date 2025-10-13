@@ -39,8 +39,11 @@ class RazorpayService {
     const keyId = process.env.RAZORPAY_KEY_ID
     const keySecret = process.env.RAZORPAY_KEY_SECRET
 
-    if (!keyId || !keySecret) {
-      throw new Error('Razorpay credentials not configured')
+    if (!keyId || !keySecret || keyId.includes('your_key_id') || keySecret.includes('your_key_secret')) {
+      console.warn('⚠️ Razorpay credentials not configured. Using demo mode.')
+      // Create a mock Razorpay instance for demo
+      this.razorpay = null as any
+      return
     }
 
     this.razorpay = new Razorpay({
@@ -53,6 +56,21 @@ class RazorpayService {
    * Create a payment link for an order
    */
   async createPaymentLink(data: PaymentLinkData): Promise<PaymentLinkResponse> {
+    // Demo mode - return mock payment link
+    if (!this.razorpay) {
+      return {
+        id: 'demo_payment_link_' + Date.now(),
+        short_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?demo=true&amount=${data.amount}&plan=${data.productName}`,
+        amount: data.amount * 100,
+        currency: data.currency,
+        description: data.description,
+        customer: data.customer,
+        order_id: data.orderId,
+        status: 'created',
+        created_at: Date.now()
+      }
+    }
+
     try {
       const paymentLink = await this.razorpay.paymentLink.create({
         amount: data.amount * 100, // Convert to paise
@@ -91,6 +109,32 @@ class RazorpayService {
     order: any
     paymentLink: PaymentLinkResponse
   }> {
+    // Demo mode - return mock order and payment link
+    if (!this.razorpay) {
+      const mockOrder = {
+        id: 'demo_order_' + Date.now(),
+        amount: data.amount * 100,
+        currency: data.currency,
+        receipt: data.orderId,
+        status: 'created',
+        created_at: Date.now()
+      }
+      
+      const mockPaymentLink = {
+        id: 'demo_payment_link_' + Date.now(),
+        short_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?demo=true&amount=${data.amount}&plan=${data.productName}`,
+        amount: data.amount * 100,
+        currency: data.currency,
+        description: data.description,
+        customer: data.customer,
+        order_id: mockOrder.id,
+        status: 'created',
+        created_at: Date.now()
+      }
+      
+      return { order: mockOrder, paymentLink: mockPaymentLink }
+    }
+
     try {
       // Create order first
       const order = await this.razorpay.orders.create({

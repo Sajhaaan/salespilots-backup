@@ -1,6 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Fira+Code:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Premium 2025 Authentication Page Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slide-up {
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 8s ease infinite;
+}
+
+/* Enhanced focus transitions for inputs */
+input:focus {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth button interactions */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Terminal/Monospace Font Classes */
+.font-terminal {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Space Mono', 'Courier New', monospace;
+  font-feature-settings: 'liga' 1, 'calt' 1;
+}
+
+.font-code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace;
+  font-variant-ligatures: common-ligatures;
+}
+
+.font-space {
+  font-family: 'Space Mono', monospace;
+  letter-spacing: -0.02em;
+}
+
+/* Terminal text effects */
+.terminal-glow {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5),
+               0 0 20px rgba(139, 92, 246, 0.3),
+               0 0 30px rgba(139, 92, 246, 0.1);
+}
+
+.terminal-cursor::after {
+  content: '▊';
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Custom scrollbar for auth pages and chatbot */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+/* Thin scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.4) rgba(255, 255, 255, 0.03);
+}
 
 /* Fix input field stability - prevent blinking and unwanted animations */
 input[type="text"],
@@ -46,6 +196,68 @@ button, input, textarea, select, a {
 button:hover:not(:disabled) {
   transform: translateY(-1px);
   transition: all 0.2s ease;
+}
+
+/* Fix layout stability issues on window minimize/restore */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure proper layout recalculation on window state changes */
+.dashboard-container {
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for better mobile support */
+}
+
+/* Fix sidebar positioning issues */
+.sidebar-container {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent layout shifts during window resize */
+.main-content {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Fix responsive breakpoint recalculation */
+@media (min-width: 1024px) {
+  .lg\:translate-x-0 {
+    transform: translateX(0) !important;
+  }
+}
+
+/* Ensure proper layout on window restore */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+  }
+}
+
+/* Fix navigation layout issues */
+main[data-pathname] {
+  contain: layout style;
+}
+
+/* Prevent layout shifts during navigation */
+.dashboard-container {
+  contain: layout;
+}
+
+/* Force proper reflow after navigation */
+.navigation-fix {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Chatbot backdrop - ensure it covers everything */
+.chatbot-backdrop {
+  pointer-events: auto !important;
+  isolation: isolate;
 }
 
 /* Mobile touch improvements */

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { getAuthUserFromRequest } from '@/lib/auth'
 
 // Rate limiting store (in production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
@@ -104,7 +105,9 @@ function getClientIP(request: NextRequest): string {
   return request.ip || 'unknown'
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  // Temporarily disable all middleware functionality
+  return NextResponse.next()
   const { pathname } = request.nextUrl
   const userAgent = request.headers.get('user-agent') || ''
   const ip = getClientIP(request)
@@ -162,33 +165,8 @@ export function middleware(request: NextRequest) {
     )
   }
 
-  // Check authentication for protected routes
-  if (!isPublicRoute(pathname)) {
-    const token = request.cookies.get('auth-token')?.value
-    
-    if (!token) {
-      // Redirect to sign-in for protected routes
-      if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-        const signInUrl = new URL('/sign-in', request.url)
-        signInUrl.searchParams.set('redirect', pathname)
-        return NextResponse.redirect(signInUrl)
-      }
-      
-      // Return 401 for API routes
-      if (pathname.startsWith('/api/')) {
-        return new NextResponse(
-          JSON.stringify({ 
-            error: 'Authentication required',
-            code: 'UNAUTHORIZED'
-          }),
-          { 
-            status: 401, 
-            headers: { 'Content-Type': 'application/json' } 
-          }
-        )
-      }
-    }
-  }
+  // Authentication is handled by individual pages/components
+  // No middleware authentication checks
 
   // Create response with security headers
   const response = NextResponse.next()

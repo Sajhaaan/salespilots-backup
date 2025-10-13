@@ -46,16 +46,31 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      // Add welcome message
+    if (isOpen) {
+      // Add welcome message every time chatbot opens
       const welcomeMessage: ChatMessage = {
-        id: '1',
+        id: Date.now().toString(),
         type: 'system',
-        content: 'AI Chatbot connected. Ready to help with customer inquiries!',
+        content: '👋 Welcome to SalesPilots AI Assistant! Ask me anything about our platform, pricing, features, or how to get started.',
         timestamp: new Date().toISOString()
       }
-      setMessages([welcomeMessage])
+      
+      if (messages.length === 0) {
+        setMessages([welcomeMessage])
+        console.log('✅ Welcome message added:', welcomeMessage)
+      }
+      
+      // Always check connection status when opened
       checkConnectionStatus()
+      
+      // Retry connection check after 2 seconds if still checking
+      const retryTimer = setTimeout(() => {
+        if (connectionStatus === 'checking') {
+          checkConnectionStatus()
+        }
+      }, 2000)
+      
+      return () => clearTimeout(retryTimer)
     }
   }, [isOpen])
 
@@ -75,15 +90,35 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
 
   const checkConnectionStatus = async () => {
     try {
-      const response = await fetch('/api/admin/openai')
+      // Use health check endpoint instead of admin endpoint
+      const response = await fetch('/api/health', {
+        cache: 'no-store', // Prevent caching
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      
       if (response.ok) {
         const data = await response.json()
-        setConnectionStatus(data.config.status === 'connected' ? 'connected' : 'disconnected')
+        console.log('Health check response:', data)
+        
+        // Find OpenAI service in health checks
+        const openaiCheck = data.checks?.find((check: any) => check.service === 'openai')
+        console.log('OpenAI check:', openaiCheck)
+        
+        if (openaiCheck && (openaiCheck.status === 'healthy' || openaiCheck.status === 'degraded')) {
+          setConnectionStatus('connected')
+          console.log('✅ AI connected')
+        } else {
+          setConnectionStatus('disconnected')
+          console.log('❌ AI disconnected:', openaiCheck)
+        }
       } else {
         setConnectionStatus('disconnected')
+        console.log('❌ Health check failed:', response.status)
       }
     } catch (error) {
-      console.error('Connection check failed:', error)
+      console.error('❌ Connection check failed:', error)
       setConnectionStatus('disconnected')
     }
   }
@@ -93,7 +128,7 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
     if (!messageText || isLoading) return
 
     if (connectionStatus !== 'connected') {
-      toast.error('AI Chatbot is not configured. Please check admin settings.')
+      toast.error('AI Chatbot is still connecting. Please wait a moment and try again.')
       return
     }
 
@@ -195,7 +230,24 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
   }
 
   return (
-    <div className={`fixed bottom-6 right-6 w-96 h-[500px] bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden ${className}`}>
+    <>
+      {/* Backdrop overlay */}
+      <div 
+        className="chatbot-backdrop fixed inset-0 bg-black/70 backdrop-blur-lg z-[100] transition-opacity duration-300"
+        onClick={onToggle}
+      />
+      
+      {/* Chatbot Modal - Centered */}
+      <div 
+        className={`fixed w-[calc(100vw-2rem)] sm:w-[450px] bg-gradient-to-br from-slate-900/98 via-purple-900/95 to-slate-900/98 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-2xl z-[101] flex flex-col overflow-hidden animate-slide-up ${className}`} 
+        style={{ 
+          top: '50%', 
+          left: '50%', 
+          transform: 'translate(-50%, -50%)',
+          height: 'min(600px, 85vh)',
+          maxHeight: '85vh'
+        }}
+      >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/20">
         <div className="flex items-center space-x-3">
@@ -243,76 +295,69 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
       {!isMinimized && (
         <>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth" style={{ scrollbarWidth: 'thin' }}>
+            {messages.length === 0 && (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Bot className="w-12 h-12 text-blue-400 mx-auto mb-3" />
+                  <p className="text-white/60 text-sm">Loading chatbot...</p>
+                </div>
+              </div>
+            )}
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.type === 'system' ? (
-                  <div className="flex items-center justify-center w-full">
-                    <div className="px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                      <span className="text-white/60 text-xs">{message.content}</span>
+                  <div className="flex items-center justify-center w-full my-2">
+                    <div className="px-4 py-2.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30 backdrop-blur-sm">
+                      <span className="text-white text-sm font-medium">{message.content}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className={`max-w-[80%] ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
-                    <div className={`flex items-start space-x-2 ${message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  <div className={`max-w-[85%] ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
+                    <div className={`flex items-start gap-2.5 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-lg ${
                         message.type === 'user' 
-                          ? 'bg-blue-500' 
+                          ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
                           : message.metadata?.success === false 
-                          ? 'bg-red-500' 
-                          : 'bg-green-500'
+                          ? 'bg-gradient-to-br from-red-500 to-red-600' 
+                          : 'bg-gradient-to-br from-green-500 to-emerald-600'
                       }`}>
                         {message.type === 'user' ? (
-                          <User className="w-3 h-3 text-white" />
+                          <User className="w-3.5 h-3.5 text-white" />
                         ) : (
-                          <Bot className="w-3 h-3 text-white" />
+                          <Bot className="w-3.5 h-3.5 text-white" />
                         )}
                       </div>
                       
-                      <div className={`group ${message.type === 'user' ? 'text-right' : ''}`}>
-                        <div className={`px-3 py-2 rounded-2xl text-sm ${
+                      <div className={`flex-1 min-w-0 ${message.type === 'user' ? 'text-right' : ''}`}>
+                        <div className={`inline-block px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-md ${
                           message.type === 'user'
-                            ? 'bg-blue-500 text-white'
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
                             : message.metadata?.success === false
                             ? 'bg-red-500/20 border border-red-500/30 text-red-200'
-                            : 'bg-white/10 border border-white/20 text-white'
-                        }`}>
+                            : 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
+                        }`} style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                           {message.content}
                         </div>
                         
                         {/* Metadata */}
-                        {message.metadata && (
-                          <div className="text-xs text-white/60 mt-1 space-y-1">
-                            <div className="flex items-center space-x-2">
-                              {message.metadata.responseTime && (
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>{message.metadata.responseTime}ms</span>
-                                </div>
-                              )}
-                              {message.metadata.category && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                  message.metadata.category === 'inquiry' ? 'bg-blue-500/20 text-blue-400' :
-                                  message.metadata.category === 'order' ? 'bg-green-500/20 text-green-400' :
-                                  message.metadata.category === 'payment' ? 'bg-purple-500/20 text-purple-400' :
-                                  'bg-orange-500/20 text-orange-400'
-                                }`}>
-                                  {message.metadata.category}
-                                </span>
-                              )}
-                              {message.metadata.success !== undefined && (
-                                message.metadata.success ? (
-                                  <CheckCircle className="w-3 h-3 text-green-400" />
-                                ) : (
-                                  <AlertCircle className="w-3 h-3 text-red-400" />
-                                )
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="text-xs text-white/40 mt-1">
-                          {new Date(message.timestamp).toLocaleTimeString()}
+                        <div className={`flex items-center gap-2 mt-1.5 text-xs ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <span className="text-white/40">
+                            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {message.metadata?.responseTime && (
+                            <span className="text-white/40 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {message.metadata.responseTime}ms
+                            </span>
+                          )}
+                          {message.metadata?.success !== undefined && (
+                            message.metadata.success ? (
+                              <CheckCircle className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <AlertCircle className="w-3 h-3 text-red-400" />
+                            )
+                          )}
                         </div>
                       </div>
                     </div>
@@ -346,14 +391,23 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
             <div className="px-4 pb-2">
               <div className="flex items-center space-x-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
                 <AlertCircle className="w-4 h-4 text-red-400" />
-                <span className="text-red-400 text-xs">AI features offline. Check admin settings.</span>
+                <span className="text-red-400 text-xs">AI is connecting... Please refresh if this persists.</span>
+              </div>
+            </div>
+          )}
+          
+          {connectionStatus === 'checking' && (
+            <div className="px-4 pb-2">
+              <div className="flex items-center space-x-2 p-2 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                <span className="text-yellow-400 text-xs">Connecting to AI services...</span>
               </div>
             </div>
           )}
 
           {/* Input */}
-          <div className="p-4 border-t border-white/20">
-            <div className="flex items-center space-x-2">
+          <div className="p-4 border-t border-white/20 bg-slate-900/50">
+            <div className="flex items-end gap-2.5">
               <div className="flex-1 relative">
                 <input
                   ref={inputRef}
@@ -362,40 +416,41 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
                   onChange={(e) => setCurrentMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-white text-sm placeholder-white/40 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  disabled={isLoading}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm placeholder-white/40 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/15 transition-all"
+                  disabled={isLoading || connectionStatus !== 'connected'}
                 />
               </div>
               
               <button
                 onClick={sendMessage}
-                disabled={isLoading}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                  !isLoading
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                disabled={isLoading || !currentMessage.trim() || connectionStatus !== 'connected'}
+                className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                  !isLoading && currentMessage.trim() && connectionStatus === 'connected'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-white'
                     : 'bg-white/10 text-white/40 cursor-not-allowed'
                 }`}
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                 )}
               </button>
               
               {messages.length > 1 && (
                 <button
                   onClick={clearChat}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/60 transition-colors"
+                  className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center bg-white/10 hover:bg-red-500/20 hover:border-red-500/30 border border-white/10 text-white/60 hover:text-red-400 transition-all"
                   title="Clear chat"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               )}
             </div>
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   )
 }

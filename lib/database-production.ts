@@ -37,6 +37,45 @@ export interface Session {
   createdAt: string
 }
 
+export interface User {
+  id: string
+  authUserId: string
+  email: string
+  firstName: string
+  lastName: string
+  businessName: string
+  instagramHandle: string
+  phone?: string
+  subscriptionPlan: 'free' | 'starter' | 'professional' | 'enterprise'
+  subscriptionStatus: 'active' | 'cancelled' | 'expired' | 'pending'
+  subscriptionExpiresAt?: string
+  subscriptionAmount?: number
+  subscriptionBillingPeriod?: 'monthly' | 'yearly'
+  subscriptionStartDate?: string
+  pendingSubscription?: {
+    plan: string
+    billingPeriod: string
+    amount: number
+    orderId: string
+    paymentLinkId: string
+    isUpgrade?: boolean
+    previousPlan?: string
+    createdAt: string
+  }
+  instagramConnected: boolean
+  whatsappConnected: boolean
+  automationEnabled: boolean
+  maxDMsPerMonth?: number
+  maxInstagramAccounts?: number
+  prioritySupport?: boolean
+  advancedAnalytics?: boolean
+  whatsappIntegration?: boolean
+  customIntegrations?: boolean
+  apiAccess?: boolean
+  createdAt: string
+  updatedAt?: string
+}
+
 // Check if we're in production and have Supabase configured
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -514,7 +553,7 @@ export class ProductionDB {
     }
   }
 
-  static async findUserByAuthId(authUserId: string): Promise<any | null> {
+  static async findUserByAuthId(authUserId: string): Promise<User | null> {
     try {
       if (isProductionDB && supabase) {
         // Use Supabase in production
@@ -732,6 +771,30 @@ export class ProductionDB {
     console.log('✅ Default demo users initialized:')
     console.log('📧 User: test123@gmail.com / password123')
     console.log('👑 Admin: admin@salespilot.io / admin123')
+  }
+
+  static async getAllUsers(): Promise<User[]> {
+    try {
+      if (isProductionDB && supabase) {
+        // Use Supabase in production
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+        
+        if (error) {
+          console.error('❌ Get all users error:', error)
+          return []
+        }
+        
+        return data || []
+      } else {
+        // Use in-memory storage for demo
+        return Object.values(usersDB)
+      }
+    } catch (error) {
+      console.error('❌ Get all users error:', error)
+      return []
+    }
   }
 }
 

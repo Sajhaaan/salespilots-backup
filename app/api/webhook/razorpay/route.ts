@@ -61,7 +61,108 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Helper function to get plan feature updates
+function getPlanFeatureUpdates(plan: string) {
+  const updates: any = {}
+  
+  switch (plan) {
+    case 'starter':
+      updates.maxDMsPerMonth = 100
+      updates.maxInstagramAccounts = 2
+      updates.prioritySupport = false
+      updates.advancedAnalytics = false
+      break
+    case 'professional':
+      updates.maxDMsPerMonth = 1000
+      updates.maxInstagramAccounts = 5
+      updates.prioritySupport = true
+      updates.advancedAnalytics = true
+      updates.whatsappIntegration = true
+      break
+    case 'enterprise':
+      updates.maxDMsPerMonth = -1 // Unlimited
+      updates.maxInstagramAccounts = -1 // Unlimited
+      updates.prioritySupport = true
+      updates.advancedAnalytics = true
+      updates.whatsappIntegration = true
+      updates.customIntegrations = true
+      updates.apiAccess = true
+      break
+    default:
+      updates.maxDMsPerMonth = 10
+      updates.maxInstagramAccounts = 1
+      updates.prioritySupport = false
+      updates.advancedAnalytics = false
+  }
+  
+  return updates
+}
+
 async function handlePaymentCaptured(payment: any) {
+  try {
+    console.log('💳 Payment captured:', payment.id)
+    
+    // Check if this is a subscription payment
+    const orderId = payment.order_id
+    const notes = payment.notes || {}
+    
+    if (notes.product_name && notes.product_name.includes('Plan')) {
+      await handleSubscriptionPayment(payment)
+    } else {
+      // Handle regular order payment
+      await handleOrderPayment(payment)
+    }
+    
+  } catch (error) {
+    console.error('❌ Error handling payment captured:', error)
+  }
+}
+
+async function handleSubscriptionPayment(payment: any) {
+  try {
+    const orderId = payment.order_id
+    const notes = payment.notes || {}
+    
+    // Find user with pending subscription
+    const users = await ProductionDB.getAllUsers()
+    const user = users.find(u => 
+      u.pendingSubscription && 
+      u.pendingSubscription.orderId === orderId
+    )
+    
+    if (!user) {
+      console.error('❌ User not found for subscription payment:', orderId)
+      return
+    }
+    
+    const pendingSub = user.pendingSubscription
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + (pendingSub.billingPeriod === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000)
+    
+    // Update user subscription
+    await ProductionDB.updateUser(user.id, {
+      subscriptionPlan: pendingSub.plan,
+      subscriptionStatus: 'active',
+      subscriptionExpiresAt: expiresAt.toISOString(),
+      subscriptionAmount: pendingSub.amount,
+      subscriptionBillingPeriod: pendingSub.billingPeriod,
+      subscriptionStartDate: now.toISOString(),
+      pendingSubscription: null,
+      // Update user features based on plan
+      ...getPlanFeatureUpdates(pendingSub.plan)
+    })
+    
+    console.log('✅ Subscription activated for user:', user.email, 'Plan:', pendingSub.plan)
+    
+    // TODO: Send confirmation email
+    // await sendSubscriptionConfirmationEmail(user, pendingSub)
+    
+  } catch (error) {
+    console.error('❌ Error handling subscription payment:', error)
+  }
+}
+
+async function handleOrderPayment(payment: any) {
   try {
     console.log('💳 Payment captured:', payment.id)
 

@@ -78,6 +78,54 @@ export default function DashboardLayout({
     }
   }, [router])
 
+  // Handle window resize to fix layout issues on minimize/restore
+  useEffect(() => {
+    const handleResize = () => {
+      // Force a re-render to recalculate responsive breakpoints
+      setSidebarOpen(false)
+      // Small delay to ensure proper recalculation
+      setTimeout(() => {
+        // Trigger a layout recalculation
+        window.dispatchEvent(new Event('resize'))
+      }, 100)
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Window was restored, recalculate layout
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'))
+        }, 200)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  // Fix layout issues when navigating between pages
+  useEffect(() => {
+    // Reset sidebar state when pathname changes
+    setSidebarOpen(false)
+    setUserMenuOpen(false)
+    
+    // Force layout recalculation after navigation
+    setTimeout(() => {
+      // Trigger a reflow to ensure proper layout
+      const mainContent = document.querySelector('.main-content')
+      if (mainContent) {
+        mainContent.style.display = 'none'
+        mainContent.offsetHeight // Trigger reflow
+        mainContent.style.display = ''
+      }
+    }, 50)
+  }, [pathname])
+
   const fetchHeaderStats = async () => {
     try {
       const response = await fetch('/api/dashboard/stats', { 
@@ -144,14 +192,14 @@ export default function DashboardLayout({
   return (
     <>
       {dbUser ? (
-        <div className="min-h-screen bg-background relative overflow-hidden">
+        <div className="min-h-screen bg-background relative overflow-hidden dashboard-container navigation-fix">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="gradient-orb orb-blue absolute -top-40 -right-40 float float-delay-1"></div>
         <div className="gradient-orb orb-purple absolute bottom-0 -left-20 float float-delay-2"></div>
       </div>
 
-      <div className="flex h-screen relative z-10">
+      <div className="flex h-screen min-h-screen relative z-10">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -161,7 +209,7 @@ export default function DashboardLayout({
 
         {/* Mobile-Optimized Sidebar */}
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-80 sm:w-72 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+          fixed inset-y-0 left-0 z-50 w-80 sm:w-72 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 sidebar-container
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex h-full flex-col glass-card border-0 border-r border-white/10 backdrop-blur-xl">
@@ -222,21 +270,22 @@ export default function DashboardLayout({
               </button>
             </div>
 
-            {/* Enhanced User Profile */}
-            <div className="border-t border-white/10 p-4 sm:p-6">
-              <div className="space-y-4">
-                {/* User Info */}
-                <div className="flex items-center space-x-3 p-3 sm:p-4 rounded-xl bg-white/5">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
-                    {dbUser.email?.[0]?.toUpperCase()}
+            {/* Enhanced User Profile - Hidden when chatbot is open */}
+            {!chatbotOpen && (
+              <div className="border-t border-white/10 p-4 sm:p-6">
+                <div className="space-y-4">
+                  {/* User Info */}
+                  <div className="flex items-center space-x-3 p-3 sm:p-4 rounded-xl bg-white/5">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                      {dbUser.email?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-medium text-white truncate">
+                        {dbUser.email?.split('@')[0] || dbUser.email}
+                      </p>
+                      <p className="text-xs sm:text-sm text-emerald-400 font-medium">Premium Plan</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm sm:text-base font-medium text-white truncate">
-                      {dbUser.email?.split('@')[0] || dbUser.email}
-                    </p>
-                    <p className="text-xs sm:text-sm text-emerald-400 font-medium">Premium Plan</p>
-                  </div>
-                </div>
                 
                 {/* Enhanced Mobile-Friendly Logout Button */}
                 <button
@@ -269,11 +318,12 @@ export default function DashboardLayout({
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
 
         {/* Main content */}
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0 main-content">
           {/* Mobile-Optimized Header */}
           <header className="glass-card border-0 border-b border-white/10 backdrop-blur-xl">
             <div className="flex h-16 sm:h-20 items-center justify-between px-4 sm:px-6">
@@ -445,7 +495,7 @@ export default function DashboardLayout({
           </header>
 
           {/* Mobile-Optimized Page content */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto" key={pathname}>
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {children}
             </div>

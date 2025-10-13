@@ -68,8 +68,28 @@ async function checkOpenAI(): Promise<HealthCheck> {
   }
 
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    await openai.models.list()
+    const apiKey = process.env.OPENAI_API_KEY || ''
+    const isOpenRouter = apiKey.startsWith('sk-or-')
+    
+    const openai = new OpenAI({ 
+      apiKey: apiKey,
+      baseURL: isOpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
+      defaultHeaders: isOpenRouter ? {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+        'X-Title': 'SalesPilots AI Chatbot'
+      } : undefined
+    })
+    
+    // For OpenRouter, test with a simple chat completion instead of models.list
+    if (isOpenRouter) {
+      await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 5
+      })
+    } else {
+      await openai.models.list()
+    }
     
     const responseTime = Date.now() - start
 
@@ -77,14 +97,14 @@ async function checkOpenAI(): Promise<HealthCheck> {
       service: 'openai',
       status: responseTime > 2000 ? 'degraded' : 'healthy',
       responseTime,
-      message: 'OpenAI API connection successful'
+      message: isOpenRouter ? 'OpenRouter API connection successful' : 'OpenAI API connection successful'
     }
   } catch (error) {
     return {
       service: 'openai',
       status: 'unhealthy',
       responseTime: Date.now() - start,
-      message: 'OpenAI API connection failed',
+      message: 'AI API connection failed',
       details: { error: error instanceof Error ? error.message : 'Unknown error' }
     }
   }
