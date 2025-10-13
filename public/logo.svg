@@ -1,0 +1,42 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with subtle 3D effect -->
+  <circle cx="24" cy="24" r="24" fill="black" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Top curved stroke - flowing S design -->
+  <path d="M8 18 Q16 14 24 18 Q32 22 40 18" 
+        stroke="white" 
+        stroke-width="4" 
+        stroke-linecap="round" 
+        fill="none"
+        filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+  
+  <!-- Bottom curved stroke - mirror of top -->
+  <path d="M8 30 Q16 34 24 30 Q32 26 40 30" 
+        stroke="white" 
+        stroke-width="4" 
+        stroke-linecap="round" 
+        fill="none"
+        filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+  
+  <!-- Center separation line - subtle wavy effect -->
+  <path d="M8 24 Q16 24 24 24 Q32 24 40 24" 
+        stroke="rgba(0,0,0,0.8)" 
+        stroke-width="1" 
+        stroke-linecap="round" 
+        fill="none"/>
+  
+  <!-- Subtle 3D highlight effect -->
+  <path d="M8 18 Q16 14 24 18 Q32 22 40 18" 
+        stroke="rgba(255,255,255,0.3)" 
+        stroke-width="1" 
+        stroke-linecap="round" 
+        fill="none"
+        opacity="0.6"/>
+  
+  <path d="M8 30 Q16 34 24 30 Q32 26 40 30" 
+        stroke="rgba(255,255,255,0.3)" 
+        stroke-width="1" 
+        stroke-linecap="round" 
+        fill="none"
+        opacity="0.6"/>
+</svg>

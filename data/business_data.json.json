@@ -1,0 +1,48 @@
+[
+  {
+    "id": "1758641736473",
+    "userId": "54e1f818-ded3-4cac-919d-9a546d80a347",
+    "businessName": "Sajhan",
+    "businessType": "Electronics",
+    "description": "dsfddvc",
+    "targetAudience": "zxcxds",
+    "instagramHandle": "dssd",
+    "location": "sabdjsb",
+    "businessHours": "9:00 AM - 6:00 PM",
+    "currency": "INR",
+    "socialLinks": {},
+    "contactInfo": {
+      "email": ""
+    },
+    "aiConfiguration": {
+      "responseStyle": "friendly",
+      "toneOfVoice": "professional",
+      "languagePreference": "manglish"
+    },
+    "createdAt": "2025-09-23T15:35:36.473Z",
+    "updatedAt": "2025-09-23T15:35:36.473Z"
+  },
+  {
+    "id": "1758642240309",
+    "userId": "e514d271-3407-448b-a252-4146fb7187f3",
+    "businessName": "Sajhan",
+    "businessType": "Home & Decor",
+    "description": "Describewelns,n,n",
+    "targetAudience": "sdiuhuihikjadw",
+    "instagramHandle": "Sajhan",
+    "location": "India",
+    "businessHours": "9:00 AM - 6:00 PM",
+    "currency": "INR",
+    "socialLinks": {},
+    "contactInfo": {
+      "email": ""
+    },
+    "aiConfiguration": {
+      "responseStyle": "friendly",
+      "toneOfVoice": "professional",
+      "languagePreference": "manglish"
+    },
+    "createdAt": "2025-09-23T15:44:00.310Z",
+    "updatedAt": "2025-09-23T15:44:00.307Z"
+  }
+]

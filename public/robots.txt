@@ -1,0 +1,40 @@
+# *
+User-agent: *
+Allow: /
+Allow: /features
+Allow: /pricing
+Allow: /about
+Allow: /contact
+Allow: /documentation/*
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+Allow: /refund
+Allow: /security
+Allow: /acceptable-use
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /_next/
+Disallow: /onboarding/
+
+# AhrefsBot
+User-agent: AhrefsBot
+Crawl-delay: 30
+
+# MJ12bot
+User-agent: MJ12bot
+Disallow: /
+
+# SemrushBot
+User-agent: SemrushBot
+Crawl-delay: 30
+
+# Host
+Host: https://salespilots.io
+
+# Sitemaps
+Sitemap: https://salespilots.io/sitemap.xml
+Sitemap: https://salespilots.io/server-sitemap.xml
