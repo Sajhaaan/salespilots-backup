@@ -22,6 +22,13 @@ d154ab26bae63ffec6f6d05bbe4b24baf67ae30558df88864cdf7689786b2e26
 ```
 Used to encrypt sensitive data in the database.
 
+### 4. OPENAI_API_KEY (Optional - For AI Chatbot)
+```
+Get from: https://platform.openai.com/api-keys
+Format: sk-proj-... or sk-...
+```
+Enables AI-powered chatbot responses. **Note**: Chatbot works with intelligent fallback responses even without this key!
+
 ## How to Add Them
 
 ### Method 1: Vercel Dashboard (Recommended - 2 minutes)
@@ -49,6 +56,11 @@ vercel env add JWT_SECRET
 
 vercel env add ENCRYPTION_KEY
 # Paste: d154ab26bae63ffec6f6d05bbe4b24baf67ae30558df88864cdf7689786b2e26
+# Select: Production, Preview, Development
+
+# Optional: Add OpenAI API key for AI chatbot (chatbot works without it too)
+vercel env add OPENAI_API_KEY
+# Paste: Your OpenAI API key (get from https://platform.openai.com/api-keys)
 # Select: Production, Preview, Development
 
 # Then redeploy
@@ -86,11 +98,18 @@ See `VERCEL-LOGIN-FIX.md` for complete troubleshooting guide.
 
 ## Test Your Setup
 
+### Authentication:
 1. Go to your deployed app
 2. Click "Sign In"
 3. Enter credentials
 4. You should see "Welcome back!" and be redirected to dashboard
 5. Dashboard should load without redirecting back to sign-in
+
+### AI Chatbot:
+1. Click the chatbot widget (bottom right)
+2. Type "hi" or "pricing"
+3. Should get instant response (works for all visitors, no login required)
+4. Chatbot uses intelligent fallback responses (works without OPENAI_API_KEY)
 
 ---
 

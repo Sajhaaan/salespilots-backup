@@ -127,7 +127,8 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
     const messageText = currentMessage.trim()
     if (!messageText || isLoading) return
 
-    if (connectionStatus !== 'connected') {
+    // Allow sending even if connection shows degraded (fallback will work)
+    if (connectionStatus === 'disconnected') {
       toast.error('AI Chatbot is still connecting. Please wait a moment and try again.')
       return
     }
@@ -146,7 +147,7 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
     const startTime = Date.now()
 
     try {
-      const response = await fetch('/api/chat/test', {
+      const response = await fetch('/api/chat/public', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -417,15 +418,15 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
                   className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white text-sm placeholder-white/40 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white/15 transition-all"
-                  disabled={isLoading || connectionStatus !== 'connected'}
+                  disabled={isLoading || connectionStatus === 'disconnected'}
                 />
               </div>
               
               <button
                 onClick={sendMessage}
-                disabled={isLoading || !currentMessage.trim() || connectionStatus !== 'connected'}
+                disabled={isLoading || !currentMessage.trim() || connectionStatus === 'disconnected'}
                 className={`flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
-                  !isLoading && currentMessage.trim() && connectionStatus === 'connected'
+                  !isLoading && currentMessage.trim() && connectionStatus !== 'disconnected'
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-white'
                     : 'bg-white/10 text-white/40 cursor-not-allowed'
                 }`}
