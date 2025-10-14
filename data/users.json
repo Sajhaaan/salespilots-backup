@@ -109,16 +109,16 @@
     "instagramHandle": "salespilots.io",
     "instagramConfig": {
       "pageId": "814775701710858",
-      "pageAccessToken": "EAAImhDQhdM0BPjZCszYc9QnfZC5DeXg9iYLyZBZCn808SATOx5ZCZBQHiLAy05VZAmPmf6PbINYCkrxdhj7cZBoUQTLZC5yCaTK5RHMYE4ZBh23WbnN5I84hhZBfJOCzKJqbLVNWonKhZAAGmZCZCCnyShr03eZCQZBmFJ1DTeKqDtMZAYmgFIh8LC0ygJFoFjUz2sozsZCHI0h32ClScY",
+      "pageAccessToken": "EAAImhDQhdM0BPvZBoTEYModuYHDerThLYmdtZAMZABnsAUextwZBCL5CQf0XwyXZCHrVNjxUjeLDoGgzA0Mx3SkK67QEGMGggpvbRTilPwAUcMUH516WR45Yx6Efz6RGjFFMCDEQyvT3495Mxe7et32wW1GXoNivPW74nrmJeH128eZCmFZBkEjWJgbnH9qpR5l0QtP",
       "instagramBusinessAccountId": "17841476127558824",
       "username": "salespilots.io",
       "name": "salespilot.io",
-      "expiresAt": "2025-12-13T20:49:50.327Z",
-      "createdAt": "2025-10-14T20:49:50.327Z"
+      "expiresAt": "2025-12-13T20:54:53.914Z",
+      "createdAt": "2025-10-14T20:54:53.914Z"
     },
-    "instagramConnectedAt": "2025-10-14T20:49:50.327Z",
+    "instagramConnectedAt": "2025-10-14T20:54:53.914Z",
     "automation_enabled": true,
     "instagramAutoReply": true,
-    "instagramAutoReplyUpdatedAt": "2025-10-14T20:53:42.736Z"
+    "instagramAutoReplyUpdatedAt": "2025-10-14T21:04:08.497Z"
   }
 ]

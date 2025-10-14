@@ -81,8 +81,10 @@ export default function IntegrationsPage() {
     if (success) {
       toast.success(success)
       setTimeout(() => {
+        fetchIntegrations() // Refresh the main integrations list
         fetchInstagramStatus()
         fetchFacebookStatus()
+        fetchUserData() // Also refresh user data
       }, 1000)
       window.history.replaceState({}, '', window.location.pathname)
     }
@@ -441,7 +443,12 @@ export default function IntegrationsPage() {
             </div>
             <div className="flex items-center space-x-3">
               <button 
-                onClick={fetchIntegrations}
+                onClick={() => {
+                  fetchIntegrations()
+                  fetchUserData()
+                  fetchInstagramStatus()
+                  fetchFacebookStatus()
+                }}
                 disabled={loading}
                 className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-colors disabled:opacity-50 text-sm"
               >
