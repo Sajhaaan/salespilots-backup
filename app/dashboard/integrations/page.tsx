@@ -492,44 +492,90 @@ export default function IntegrationsPage() {
             const isConnected = integration.connected
             
             return (
-              <div key={integration.id} className="bg-white/5 rounded-lg border border-white/10 p-6 hover:border-white/20 transition-all duration-300">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${integration.color} rounded-xl flex items-center justify-center`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-1">{integration.name}</h3>
-                      <p className="text-white/60 text-sm">{integration.description}</p>
-                      {isConnected && integration.handle && (
-                        <p className="text-blue-400 text-sm mt-1">@{integration.handle}</p>
-                      )}
+              <div key={integration.id} className={`relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                isConnected 
+                  ? 'bg-gradient-to-br from-white/10 via-white/5 to-transparent border-green-500/30 shadow-lg shadow-green-500/10' 
+                  : 'bg-white/5 border-white/10 hover:border-white/20'
+              }`}>
+                {/* Live Indicator for Connected Integrations */}
+                {isConnected && (
+                  <div className="absolute top-0 right-0 m-4">
+                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-full">
+                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs font-medium text-green-400">LIVE</span>
                     </div>
                   </div>
-                  
-                  <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border ${getStatusColor(integration.status)}`}>
-                    {getStatusIcon(integration.status)}
-                    <span className="text-sm font-medium">{getStatusText(integration.status)}</span>
+                )}
+                
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center space-x-4">
+                      <div className={`relative w-14 h-14 bg-gradient-to-br ${integration.color} rounded-2xl flex items-center justify-center shadow-lg ${isConnected ? 'ring-2 ring-green-400/20' : ''}`}>
+                        <Icon className="w-7 h-7 text-white" />
+                        {isConnected && (
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
+                            <CheckCircle className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">{integration.name}</h3>
+                        <p className="text-white/60 text-sm">{integration.description}</p>
+                        {isConnected && integration.handle && (
+                          <div className="flex items-center space-x-2 mt-2">
+                            <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                              <Instagram className="w-3 h-3 text-blue-400" />
+                              <span className="text-blue-400 text-sm font-medium">@{integration.handle}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
                 {/* Stats */}
                 {isConnected && integration.stats && (
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white/5 rounded-lg p-3">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <MessageSquare className="w-4 h-4 text-blue-400" />
-                        <span className="text-white/60 text-xs">Messages</span>
+                  <div className="mb-6">
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-xl p-3 backdrop-blur-sm">
+                        <div className="flex items-center space-x-2 mb-1.5">
+                          <MessageSquare className="w-4 h-4 text-blue-400" />
+                          <span className="text-white/70 text-xs font-medium">Messages</span>
+                        </div>
+                        <p className="text-2xl font-bold text-white">{integration.stats.messages || 0}</p>
+                        <p className="text-xs text-blue-400 mt-1">Today</p>
                       </div>
-                      <p className="text-lg font-bold text-white">{integration.stats.messages || 0}</p>
-                    </div>
-                    <div className="bg-white/5 rounded-lg p-3">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Users className="w-4 h-4 text-purple-400" />
-                        <span className="text-white/60 text-xs">Customers</span>
+                      <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/30 rounded-xl p-3 backdrop-blur-sm">
+                        <div className="flex items-center space-x-2 mb-1.5">
+                          <Users className="w-4 h-4 text-purple-400" />
+                          <span className="text-white/70 text-xs font-medium">Customers</span>
+                        </div>
+                        <p className="text-2xl font-bold text-white">{integration.stats.customers || 0}</p>
+                        <p className="text-xs text-purple-400 mt-1">Active</p>
                       </div>
-                      <p className="text-lg font-bold text-white">{integration.stats.customers || 0}</p>
+                      <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30 rounded-xl p-3 backdrop-blur-sm">
+                        <div className="flex items-center space-x-2 mb-1.5">
+                          <TrendingUp className="w-4 h-4 text-green-400" />
+                          <span className="text-white/70 text-xs font-medium">Orders</span>
+                        </div>
+                        <p className="text-2xl font-bold text-white">{integration.stats.orders || 0}</p>
+                        <p className="text-xs text-green-400 mt-1">Today</p>
+                      </div>
                     </div>
+                    
+                    {/* Connection Health Indicators */}
+                    {integration.id === 'instagram' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+                          <Wifi className="w-4 h-4 text-green-400" />
+                          <span className="text-xs text-green-400 font-medium">Webhook Active</span>
+                        </div>
+                        <div className="flex items-center space-x-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                          <Bot className="w-4 h-4 text-blue-400" />
+                          <span className="text-xs text-blue-400 font-medium">AI Ready</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -566,21 +612,33 @@ export default function IntegrationsPage() {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3">
                   {isConnected ? (
                     <>
                       {integration.id === 'instagram' && (
-                        <button
-                          onClick={toggleAutoReply}
-                          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                            autoReplyEnabled 
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30' 
-                              : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
-                          }`}
-                        >
-                          <Bot className="w-4 h-4" />
-                          <span>Auto-Reply {autoReplyEnabled ? 'ON' : 'OFF'}</span>
-                        </button>
+                        <>
+                          <button
+                            onClick={toggleAutoReply}
+                            className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold ${
+                              autoReplyEnabled 
+                                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40' 
+                                : 'bg-white/10 text-white/80 border border-white/20 hover:bg-white/20 hover:text-white'
+                            }`}
+                          >
+                            <Bot className="w-4 h-4" />
+                            <span>AI Auto-Reply {autoReplyEnabled ? 'ON' : 'OFF'}</span>
+                            {autoReplyEnabled && (
+                              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => window.open(`https://instagram.com/${integration.handle}`, '_blank')}
+                            className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-xl hover:from-pink-600 hover:to-purple-700 transition-all text-sm font-semibold shadow-lg shadow-pink-500/25"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span>Open</span>
+                          </button>
+                        </>
                       )}
                       <button
                         onClick={
@@ -590,7 +648,7 @@ export default function IntegrationsPage() {
                             ? handleDisconnectFacebook
                             : undefined
                         }
-                        className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+                        className="flex items-center space-x-2 px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/20 transition-all text-sm font-semibold"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Disconnect</span>
@@ -608,10 +666,11 @@ export default function IntegrationsPage() {
                         <button
                           onClick={integration.id === 'instagram' ? handleConnectInstagram : undefined}
                           disabled={loading}
-                          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-lg hover:shadow-blue-500/25"
+                          className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02]"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-5 h-5" />
                           <span>Connect {integration.name}</span>
+                          <ArrowRight className="w-4 h-4" />
                         </button>
                       )}
                     </>
