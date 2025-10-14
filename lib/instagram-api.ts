@@ -97,20 +97,17 @@ export async function sendInstagramImage(
     
     const url = `https://graph.facebook.com/v18.0/${pageId}/messages`
     
-    const messageData = {
+    const messageData: any = {
       recipient: { id: recipientId },
       message: {
         attachment: {
           type: 'image',
           payload: {
-            url: imageUrl
+            url: imageUrl,
+            is_reusable: true
           }
         }
       }
-    }
-    
-    if (caption) {
-      messageData.message.attachment.payload.caption = caption
     }
     
     const response = await fetch(url, {
@@ -130,6 +127,12 @@ export async function sendInstagramImage(
     }
     
     console.log('✅ Instagram image sent successfully')
+    
+    // Send caption as a separate message if provided
+    if (caption) {
+      await sendInstagramMessage(recipientId, caption)
+    }
+    
     return true
     
   } catch (error) {
