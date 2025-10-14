@@ -125,7 +125,23 @@ export class ProductionDB {
           return null
         }
         console.log('✅ Database: User found in Supabase:', !!data)
-        return data as AuthUser
+        
+        // Transform snake_case to camelCase
+        if (data) {
+          const dbUser = data as AuthUserDB
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            passwordHash: dbUser.password_hash,
+            firstName: dbUser.first_name,
+            lastName: dbUser.last_name,
+            emailVerified: dbUser.email_verified,
+            role: dbUser.role,
+            createdAt: dbUser.created_at,
+            updatedAt: dbUser.updated_at
+          }
+        }
+        return null
       } else {
         // Use in-memory storage for demo
         console.log('🔍 Database: Using in-memory storage for auth query')
@@ -367,7 +383,23 @@ export class ProductionDB {
           console.log('Supabase user query error:', error.message)
           return null
         }
-        return data as AuthUser
+        
+        // Transform snake_case to camelCase
+        if (data) {
+          const dbUser = data as AuthUserDB
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            passwordHash: dbUser.password_hash,
+            firstName: dbUser.first_name,
+            lastName: dbUser.last_name,
+            emailVerified: dbUser.email_verified,
+            role: dbUser.role,
+            createdAt: dbUser.created_at,
+            updatedAt: dbUser.updated_at
+          }
+        }
+        return null
       } else {
         // Use in-memory storage for demo
         // If in-memory is empty, try to load from JSON file
