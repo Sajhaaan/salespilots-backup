@@ -15,14 +15,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Clear Instagram connection
+    // Clear Instagram connection (use snake_case for database columns)
     await ProductionDB.updateUser(user.id, {
-      instagramConnected: false,
-      instagramHandle: null,
-      instagramConfig: null,
-      instagramAutoReply: false,
-      instagramConnectedAt: null,
-      instagramDisconnectedAt: new Date().toISOString()
+      instagram_connected: false,
+      instagram_handle: null,
+      instagram_config: null,
+      instagram_auto_reply: false,
+      automation_enabled: false,
+      instagram_connected_at: null,
+      instagram_disconnected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     })
 
     return NextResponse.json({
