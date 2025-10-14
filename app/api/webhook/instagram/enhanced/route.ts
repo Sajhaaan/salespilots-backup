@@ -78,9 +78,11 @@ async function handleEnhancedInstagramMessage(event: any) {
     // Find business user with Instagram connected
     const businessUser = await findBusinessUserWithInstagram()
     if (!businessUser) {
-      console.log('No business user with Instagram connected found')
+      console.log('❌ No business user with Instagram connected found')
       return
     }
+    
+    console.log('✅ Found business user:', businessUser.id, 'with Instagram:', businessUser.instagramHandle)
 
     // Find or create customer
     let customer = await findOrCreateCustomer(senderId, businessUser.id)
@@ -138,7 +140,16 @@ async function handleEnhancedInstagramMessage(event: any) {
 
     // Send response to customer
     if (response.message) {
-      await sendInstagramMessage(senderId, response.message)
+      // Use the Instagram credentials from the business user's config
+      const pageAccessToken = businessUser.instagramConfig?.pageAccessToken
+      const instagramBusinessAccountId = businessUser.instagramConfig?.instagramBusinessAccountId
+      
+      console.log('📤 Sending response with credentials:', {
+        hasToken: !!pageAccessToken,
+        hasAccountId: !!instagramBusinessAccountId
+      })
+      
+      await sendInstagramMessage(senderId, response.message, undefined, pageAccessToken, instagramBusinessAccountId)
       
       // Save outgoing message
       await saveOutgoingMessage(businessUser.id, customer.id, response.message, response.category)

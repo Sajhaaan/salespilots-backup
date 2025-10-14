@@ -15,13 +15,16 @@ interface QuickReply {
 export async function sendInstagramMessage(
   recipientId: string, 
   message: string, 
-  quickReplies?: QuickReply[]
+  quickReplies?: QuickReply[],
+  pageAccessToken?: string,
+  instagramBusinessAccountId?: string
 ): Promise<boolean> {
   try {
     console.log('📤 Sending Instagram message to:', recipientId)
     
-    const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN
-    const pageId = process.env.INSTAGRAM_PAGE_ID
+    // Use provided tokens or fallback to env vars
+    const accessToken = pageAccessToken || process.env.INSTAGRAM_ACCESS_TOKEN
+    const pageId = instagramBusinessAccountId || process.env.INSTAGRAM_PAGE_ID
     const appId = process.env.INSTAGRAM_APP_ID
     
     if (!accessToken || !pageId) {
@@ -29,7 +32,7 @@ export async function sendInstagramMessage(
       return false
     }
     
-    console.log('🔧 Using Instagram App ID:', appId)
+    console.log('🔧 Sending via Instagram Business Account:', pageId?.substring(0, 10) + '...')
     
     const url = `https://graph.facebook.com/v18.0/${pageId}/messages`
     
