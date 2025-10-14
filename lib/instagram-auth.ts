@@ -12,8 +12,8 @@ export class InstagramAuth {
     // Support both Facebook_* and Instagram_* env var names for flexibility
     facebookAppId: process.env.FACEBOOK_APP_ID || process.env.INSTAGRAM_APP_ID || '',
     instagramAppId: process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID || '',
-    // Force use of custom domain to avoid deployment URL changes
-    redirectUri: 'https://salespilots-io.vercel.app',
+    // Use environment variable for redirect URI
+    redirectUri: process.env.NEXT_PUBLIC_APP_URL || 'https://salespilots-backup.vercel.app',
     scope: [
       'instagram_basic',
       'pages_show_list'
