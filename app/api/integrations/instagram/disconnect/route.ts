@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       instagram_auto_reply: false,
       automation_enabled: false,
       instagram_connected_at: null,
-      instagram_disconnected_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
 
