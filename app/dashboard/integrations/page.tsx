@@ -97,7 +97,14 @@ export default function IntegrationsPage() {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/user/profile')
+      const cacheBuster = `?t=${Date.now()}`
+      const response = await fetch(`/api/user/profile${cacheBuster}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       const data = await response.json()
       
       if (data.success) {
@@ -110,8 +117,14 @@ export default function IntegrationsPage() {
 
   const fetchInstagramStatus = async () => {
     try {
-      const response = await fetch('/api/integrations/instagram/status', {
-        credentials: 'include'
+      const cacheBuster = `?t=${Date.now()}`
+      const response = await fetch(`/api/integrations/instagram/status${cacheBuster}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       })
       const data = await response.json()
       
@@ -141,8 +154,14 @@ export default function IntegrationsPage() {
 
   const fetchFacebookStatus = async () => {
     try {
-      const response = await fetch('/api/user/profile', {
-        credentials: 'include'
+      const cacheBuster = `?t=${Date.now()}`
+      const response = await fetch(`/api/user/profile${cacheBuster}`, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       })
       const data = await response.json()
       
@@ -172,6 +191,9 @@ export default function IntegrationsPage() {
   const fetchIntegrations = async () => {
     try {
       setLoading(true)
+      
+      // Add cache busting timestamp to force fresh data
+      const cacheBuster = `?t=${Date.now()}`
       
       // Always create default integrations list
       const defaultIntegrations: Integration[] = [
@@ -218,12 +240,24 @@ export default function IntegrationsPage() {
       
       // Try to fetch status from API and user profile
       try {
-        // Fetch user profile first for accurate data
-        const profileResponse = await fetch('/api/user/profile', { credentials: 'include' })
+        // Fetch user profile first for accurate data (with cache busting)
+        const profileResponse = await fetch(`/api/user/profile${cacheBuster}`, { 
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        })
         const profileData = await profileResponse.json()
         
-        const response = await fetch('/api/integrations/status', {
-          credentials: 'include'
+        const response = await fetch(`/api/integrations/status${cacheBuster}`, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
         })
         const data = await response.json()
         
