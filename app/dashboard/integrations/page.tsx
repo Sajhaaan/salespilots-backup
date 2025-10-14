@@ -351,18 +351,34 @@ export default function IntegrationsPage() {
       setLoading(true)
       const response = await fetch('/api/integrations/instagram/disconnect', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
       })
       const data = await response.json()
       
       if (data.success) {
         toast.success('Instagram disconnected successfully')
-        // Refresh all data
-        await Promise.all([
-          fetchIntegrations(),
-          fetchInstagramStatus(),
-          fetchUserData()
-        ])
+        
+        // Force immediate UI update
+        setIntegrations(prev => prev.map(integration => 
+          integration.id === 'instagram' 
+            ? { ...integration, connected: false, status: 'disconnected', handle: undefined }
+            : integration
+        ))
+        setAutoReplyEnabled(false)
+        setInstagramConfig({ status: 'disconnected', message: 'Not connected', user: null })
+        
+        // Then refresh all data from server
+        setTimeout(async () => {
+          await Promise.all([
+            fetchIntegrations(),
+            fetchInstagramStatus(),
+            fetchUserData()
+          ])
+        }, 500)
       } else {
         console.error('Disconnect error:', data)
         toast.error(data.details || data.error || 'Failed to disconnect Instagram')

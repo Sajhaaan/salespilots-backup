@@ -124,11 +124,11 @@ export async function GET(request: NextRequest) {
           const user = await ProductionDB.findUserByAuthId(authUser.id)
           
           if (user) {
-            // Update existing user
+            // Update existing user (use snake_case for database)
             await ProductionDB.updateUser(user.id, {
-              instagramConnected: true,
-              instagramHandle: instagramInfo.username,
-              instagramConfig: {
+              instagram_connected: true,
+              instagram_handle: instagramInfo.username,
+              instagram_config: {
                 pageId: instagramAccount.pageId,
                 pageAccessToken: instagramAccount.pageAccessToken,
                 instagramBusinessAccountId: instagramAccount.instagramBusinessAccountId,
@@ -137,8 +137,10 @@ export async function GET(request: NextRequest) {
                 expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(), // 60 days
                 createdAt: new Date().toISOString()
               },
-              instagramConnectedAt: new Date().toISOString(),
-              automation_enabled: true // Enable automation by default
+              instagram_connected_at: new Date().toISOString(),
+              automation_enabled: true, // Enable automation by default
+              instagram_auto_reply: true, // Enable auto-reply
+              updated_at: new Date().toISOString()
             })
             console.log('✅ Instagram credentials saved to database for user:', user.id)
           } else {
