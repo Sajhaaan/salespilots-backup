@@ -140,13 +140,14 @@ async function handleEnhancedInstagramMessage(event: any) {
 
     // Send response to customer
     if (response.message) {
-      // Use the Instagram credentials from the business user's config
-      const pageAccessToken = businessUser.instagramConfig?.pageAccessToken
-      const instagramBusinessAccountId = businessUser.instagramConfig?.instagramBusinessAccountId
+      // Use the Instagram credentials from the business user's config OR environment variables
+      const pageAccessToken = businessUser.instagramConfig?.pageAccessToken || process.env.INSTAGRAM_PAGE_ACCESS_TOKEN
+      const instagramBusinessAccountId = businessUser.instagramConfig?.instagramBusinessAccountId || process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
       
       console.log('📤 Sending response with credentials:', {
         hasToken: !!pageAccessToken,
-        hasAccountId: !!instagramBusinessAccountId
+        hasAccountId: !!instagramBusinessAccountId,
+        source: businessUser.instagramConfig?.pageAccessToken ? 'database' : 'environment'
       })
       
       await sendInstagramMessage(senderId, response.message, undefined, pageAccessToken, instagramBusinessAccountId)
@@ -374,9 +375,53 @@ async function processCustomerMessage(
 async function findBusinessUserWithInstagram(): Promise<any> {
   try {
     const users = await dbUsers.findAll()
-    return users.find((u: any) => u.instagram_connected && u.instagram_auto_reply)
+    const dbUser = users.find((u: any) => u.instagram_connected && u.instagram_auto_reply)
+    
+    if (dbUser) {
+      return dbUser
+    }
+    
+    // Fallback: Check environment variables for Instagram connection
+    if (process.env.INSTAGRAM_CONNECTED === 'true') {
+      console.log('📡 Using Instagram credentials from environment variables')
+      // Return a mock user with env var credentials
+      return {
+        id: 'env-user',
+        instagramConnected: true,
+        instagramHandle: process.env.INSTAGRAM_USERNAME,
+        instagramConfig: {
+          pageId: process.env.INSTAGRAM_PAGE_ID,
+          pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
+          instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
+          username: process.env.INSTAGRAM_USERNAME
+        },
+        automation_enabled: true,
+        instagram_auto_reply: true
+      }
+    }
+    
+    return null
   } catch (error) {
     console.error('Error finding business user:', error)
+    
+    // Last resort: try environment variables
+    if (process.env.INSTAGRAM_CONNECTED === 'true') {
+      console.log('📡 Fallback: Using Instagram credentials from environment variables')
+      return {
+        id: 'env-user',
+        instagramConnected: true,
+        instagramHandle: process.env.INSTAGRAM_USERNAME,
+        instagramConfig: {
+          pageId: process.env.INSTAGRAM_PAGE_ID,
+          pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
+          instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
+          username: process.env.INSTAGRAM_USERNAME
+        },
+        automation_enabled: true,
+        instagram_auto_reply: true
+      }
+    }
+    
     return null
   }
 }

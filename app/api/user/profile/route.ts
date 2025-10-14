@@ -16,6 +16,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
+    // Check for Instagram connection from environment variables (fallback for Vercel)
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    const envInstagramHandle = process.env.INSTAGRAM_USERNAME
+    const envInstagramConfig = envInstagramConnected ? {
+      pageId: process.env.INSTAGRAM_PAGE_ID,
+      pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
+      instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
+      username: process.env.INSTAGRAM_USERNAME,
+      expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(),
+      createdAt: new Date().toISOString()
+    } : null
+
     return NextResponse.json({
       success: true,
       user: {
@@ -28,7 +40,12 @@ export async function GET(request: NextRequest) {
         memberSince: user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Jan 2024',
         businessName: user.businessName || 'SalesPilot Store',
         businessType: user.businessType || 'retail',
-        businessAddress: user.businessAddress || '123 Business Street, Mumbai, Maharashtra, India'
+        businessAddress: user.businessAddress || '123 Business Street, Mumbai, Maharashtra, India',
+        // Instagram connection (prefer user data, fallback to env vars)
+        instagramConnected: user.instagramConnected || envInstagramConnected,
+        instagramHandle: user.instagramHandle || envInstagramHandle,
+        instagramConfig: user.instagramConfig || envInstagramConfig,
+        automation_enabled: user.automation_enabled !== undefined ? user.automation_enabled : envInstagramConnected
       }
     })
 
