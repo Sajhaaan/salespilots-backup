@@ -45,5 +45,41 @@
     "emailVerified": false,
     "id": "aa8dc30b-33cb-4e69-80ca-cb3eb150e360",
     "createdAt": "2025-09-25T20:41:50.084Z"
+  },
+  {
+    "email": "newuser@example.com",
+    "passwordHash": "pbkdf2$120000$sha512$b825d339d412a74e137719afd7ea13f8$3b6028aa86a468251bf53de998c4d83b1e474c90da9daba8d577306cb43f442942378b1c1beba4c1fe22ea8e2e8fed5b9b058ff52a915c1fb81c2336166a1c65",
+    "firstName": "New",
+    "lastName": "User",
+    "emailVerified": false,
+    "id": "73d30904-3e7e-48c9-8dea-b2b44689c606",
+    "createdAt": "2025-10-13T19:27:53.791Z"
+  },
+  {
+    "email": "testuser123@example.com",
+    "passwordHash": "pbkdf2$120000$sha512$f9a0bdd27f8a3bef5679952323ca45e3$a813e64859b09e99ce04ea6e5c9c549ff12d46d61de9e08e87b983056162e29899fd75b3465c098140341beb97259965f7986c9be2311f1181779c4e84940118",
+    "firstName": "Test",
+    "lastName": "User",
+    "emailVerified": false,
+    "id": "585fbff8-d76e-4092-bd7c-28e5b6fa8d2b",
+    "createdAt": "2025-10-13T21:31:18.274Z"
+  },
+  {
+    "email": "johndoe@example.com",
+    "passwordHash": "pbkdf2$120000$sha512$eabb3302816ee46ae33c1de53cbfea20$fcccc2ca4de1e4c5401d73879285154ceed65351aa19c2b0f89b0235877fc7c29d51336b79328c7ea4bb5fddff0f377d8e655522647ee271b7537297747cfb5c",
+    "firstName": "John",
+    "lastName": "Doe",
+    "emailVerified": false,
+    "id": "10d8e05a-4e2f-4951-bc4a-6a0bfdaa6ec3",
+    "createdAt": "2025-10-13T21:32:36.490Z"
+  },
+  {
+    "email": "backendtest@example.com",
+    "passwordHash": "pbkdf2$120000$sha512$5313a5a0668bfb5c5f80bf9467c7100a$7d057bebcc8dc661ffae8bfe2e8c4d816518b8b7e166e46e2e0efb79367a5fddb3c2d133def777dad9830815c3c6a123e44ab6e701d160a4f50ae9c51cd0d88a",
+    "firstName": "Backend",
+    "lastName": "Test",
+    "emailVerified": false,
+    "id": "dd1c05ed-ac69-41e6-b964-d291e7f416aa",
+    "createdAt": "2025-10-13T22:01:42.393Z"
   }
 ]
