@@ -214,29 +214,55 @@ export default function IntegrationsPage() {
         }
       ]
       
-      // Try to fetch status from API
+      // Try to fetch status from API and user profile
       try {
+        // Fetch user profile first for accurate data
+        const profileResponse = await fetch('/api/user/profile', { credentials: 'include' })
+        const profileData = await profileResponse.json()
+        
         const response = await fetch('/api/integrations/status', {
           credentials: 'include'
         })
         const data = await response.json()
         
-        if (data.success) {
-          // Update with real status
-          defaultIntegrations[0].connected = data.instagram?.status === 'active'
-          defaultIntegrations[0].status = data.instagram?.status === 'active' ? 'connected' : 'disconnected'
-          defaultIntegrations[0].handle = data.instagram?.handle
-          defaultIntegrations[0].stats = {
-            messages: data.instagram?.messages || 0,
-            customers: data.instagram?.customers || 0
+        // Use profile data as primary source for Instagram
+        const instagramConnected = profileData?.user?.instagramConnected || false
+        const instagramHandle = profileData?.user?.instagramHandle || undefined
+        const automationEnabled = profileData?.user?.automation_enabled || false
+        
+        console.log('🔍 Integration Status Check:', { 
+          instagramConnected, 
+          instagramHandle,
+          automationEnabled,
+          profileUser: profileData?.user
+        })
+        
+        if (data.success || profileData?.user) {
+          // Update Instagram status (index 1)
+          defaultIntegrations[1].connected = instagramConnected
+          defaultIntegrations[1].status = instagramConnected ? 'connected' : 'disconnected'
+          defaultIntegrations[1].handle = instagramHandle
+          defaultIntegrations[1].stats = {
+            messages: data.integrations?.instagram?.messages || 0,
+            customers: data.integrations?.instagram?.customers || 0
           }
           
-          defaultIntegrations[1].connected = data.whatsapp?.status === 'active'
-          defaultIntegrations[1].status = data.whatsapp?.status === 'active' ? 'connected' : 'disconnected'
-          defaultIntegrations[1].stats = {
-            messages: data.whatsapp?.messages || 0,
-            customers: data.whatsapp?.customers || 0
+          // Update Facebook status (index 0)
+          const facebookConnected = profileData?.user?.facebookConnected || false
+          defaultIntegrations[0].connected = facebookConnected
+          defaultIntegrations[0].status = facebookConnected ? 'connected' : 'disconnected'
+          defaultIntegrations[0].handle = profileData?.user?.facebookConfig?.userInfo?.name
+          
+          // Update WhatsApp status (index 2)
+          defaultIntegrations[2].connected = data.integrations?.whatsapp?.connected || false
+          defaultIntegrations[2].status = data.integrations?.whatsapp?.connected ? 'connected' : 'disconnected'
+          defaultIntegrations[2].stats = {
+            messages: data.integrations?.whatsapp?.messages || 0,
+            customers: data.integrations?.whatsapp?.customers || 0
           }
+          
+          // Set automation status
+          setAutoReplyEnabled(automationEnabled)
         }
       } catch (apiError) {
         console.error('Failed to fetch integration status:', apiError)
