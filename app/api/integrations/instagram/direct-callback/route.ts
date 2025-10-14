@@ -115,11 +115,63 @@ export async function GET(request: NextRequest) {
         
         console.log('✅ Instagram account info:', instagramInfo)
         
+        // Save to database
+        const { getAuthUserFromRequest } = await import('@/lib/auth')
+        const { ProductionDB } = await import('@/lib/database-production')
+        
+        const authUser = await getAuthUserFromRequest(request)
+        if (authUser) {
+          const user = await ProductionDB.findUserByAuthId(authUser.id)
+          
+          if (user) {
+            // Update existing user
+            await ProductionDB.updateUser(user.id, {
+              instagramConnected: true,
+              instagramHandle: instagramInfo.username,
+              instagramConfig: {
+                pageId: instagramAccount.pageId,
+                pageAccessToken: instagramAccount.pageAccessToken,
+                instagramBusinessAccountId: instagramAccount.instagramBusinessAccountId,
+                username: instagramInfo.username,
+                name: instagramInfo.name,
+                expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(), // 60 days
+                createdAt: new Date().toISOString()
+              },
+              instagramConnectedAt: new Date().toISOString(),
+              automation_enabled: true // Enable automation by default
+            })
+            console.log('✅ Instagram credentials saved to database for user:', user.id)
+          } else {
+            // Create new user profile
+            await ProductionDB.createUser({
+              authUserId: authUser.id,
+              email: authUser.email || `${authUser.id}@example.com`,
+              firstName: instagramInfo.name?.split(' ')[0] || 'Instagram',
+              lastName: instagramInfo.name?.split(' ').slice(1).join(' ') || 'User',
+              instagramConnected: true,
+              instagramHandle: instagramInfo.username,
+              instagramConfig: {
+                pageId: instagramAccount.pageId,
+                pageAccessToken: instagramAccount.pageAccessToken,
+                instagramBusinessAccountId: instagramAccount.instagramBusinessAccountId,
+                username: instagramInfo.username,
+                name: instagramInfo.name,
+                expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(),
+                createdAt: new Date().toISOString()
+              },
+              subscriptionPlan: 'free',
+              instagramConnectedAt: new Date().toISOString(),
+              automation_enabled: true
+            })
+            console.log('✅ Created new user profile with Instagram credentials')
+          }
+        }
+        
         // Success!
         console.log('✅ Direct Instagram OAuth completed successfully')
         
         const redirectUrl = new URL('/dashboard/integrations', baseUrl)
-        redirectUrl.searchParams.set('success', `Instagram connected successfully! Username: ${instagramInfo.username}`)
+        redirectUrl.searchParams.set('success', `Instagram connected successfully! @${instagramInfo.username} - AI Auto-Reply is now active!`)
         
         return NextResponse.redirect(redirectUrl)
         
