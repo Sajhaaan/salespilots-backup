@@ -265,8 +265,11 @@ export default function IntegrationsPage() {
       if (data.success && data.authUrl) {
         window.location.href = data.authUrl
       } else if (data.useDemo) {
-        // Show demo mode message
-        toast.error('Instagram integration requires Facebook App credentials. Please configure FACEBOOK_APP_ID and FACEBOOK_APP_SECRET in Vercel environment variables.')
+        // Show helpful setup message
+        toast('Instagram integration requires Facebook App setup. Check the setup instructions below.', {
+          icon: '💡',
+          duration: 5000,
+        })
       } else {
         toast.error(data.error || 'Failed to initiate Instagram connection')
       }
@@ -526,6 +529,38 @@ export default function IntegrationsPage() {
                         <span className="text-white/60 text-xs">Customers</span>
                       </div>
                       <p className="text-lg font-bold text-white">{integration.stats.customers || 0}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Setup Instructions for Non-Connected Integrations */}
+                {!isConnected && (
+                  <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-blue-400 mb-1">Setup Required</h4>
+                        {integration.id === 'instagram' && (
+                          <p className="text-xs text-white/70">
+                            To connect Instagram, you need to configure Facebook App credentials in your environment variables:
+                            <br />• FACEBOOK_APP_ID
+                            <br />• FACEBOOK_APP_SECRET
+                            <br />• NEXT_PUBLIC_FACEBOOK_APP_ID
+                          </p>
+                        )}
+                        {integration.id === 'whatsapp' && (
+                          <p className="text-xs text-white/70">
+                            To connect WhatsApp Business, configure:
+                            <br />• WHATSAPP_BUSINESS_TOKEN
+                            <br />• WHATSAPP_PHONE_NUMBER_ID
+                          </p>
+                        )}
+                        {integration.id === 'facebook' && (
+                          <p className="text-xs text-white/70">
+                            Facebook Login will be available once you configure your Facebook App credentials.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

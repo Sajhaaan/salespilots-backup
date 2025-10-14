@@ -14,9 +14,10 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Use a different OAuth approach that bypasses domain restrictions
-      const redirectUri = 'https://salespilots-io.vercel.app/api/integrations/instagram/direct-callback'
-      const scope = 'instagram_basic,pages_show_list'
+      // Use dynamic redirect URI based on environment
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      const redirectUri = `${baseUrl}/api/integrations/instagram/direct-callback`
+      const scope = 'instagram_basic,pages_show_list,instagram_manage_messages,pages_read_engagement'
       
       const params = new URLSearchParams({
         client_id: facebookAppId,
