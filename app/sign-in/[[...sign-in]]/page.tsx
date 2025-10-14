@@ -57,11 +57,22 @@ export default function SignInPage() {
 
       if (data.ok) {
         toast.success('Welcome back!')
+        console.log('✅ Login successful, user data:', data.user)
+        
         // Redirect to the intended page or dashboard
         const redirectTo = searchParams.get('redirect') || '/dashboard'
-        // Use window.location.href for a full page reload to ensure cookies are available
-        window.location.href = redirectTo
+        
+        // Longer delay for production/Vercel to ensure cookie is fully processed
+        const isProduction = window.location.hostname !== 'localhost'
+        const delay = isProduction ? 300 : 100
+        
+        console.log(`🔄 Redirecting to ${redirectTo} in ${delay}ms...`)
+        
+        setTimeout(() => {
+          window.location.href = redirectTo
+        }, delay)
       } else {
+        console.error('❌ Login failed:', data.error)
         toast.error(data.error || 'Sign in failed')
       }
     } catch (error) {

@@ -53,30 +53,59 @@ export default function DashboardLayout({
   useEffect(() => {
     let mounted = true
     setAuthLoading(true)
-    fetch('/api/auth/me', { method: 'GET', credentials: 'include', cache: 'no-store' })
-      .then(r => r.json())
-      .then(res => {
-        if (!mounted) return
-        if (res?.ok && res?.user) {
-          setDbUser(res.user)
-          // Fetch header stats after user is authenticated
-          fetchHeaderStats()
-        } else {
-          setDbUser(null)
-          router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
+    
+    // Small delay to ensure cookies from login are available
+    const checkAuth = () => {
+      console.log('🔍 Dashboard: Starting auth check...')
+      fetch('/api/auth/me', { 
+        method: 'GET', 
+        credentials: 'include', 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
         }
       })
-      .catch(() => {
-        setDbUser(null)
-        router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
-      })
-      .finally(() => {
-        if (mounted) setAuthLoading(false)
-      })
+        .then(r => {
+          console.log('🔍 Dashboard: Auth response status:', r.status)
+          return r.json()
+        })
+        .then(res => {
+          if (!mounted) return
+          console.log('🔍 Dashboard auth check result:', res)
+          if (res?.ok && res?.user) {
+            console.log('✅ Dashboard: User authenticated:', res.user.email)
+            setDbUser(res.user)
+            // Fetch header stats after user is authenticated
+            fetchHeaderStats()
+          } else {
+            console.log('❌ Dashboard: User not authenticated, redirecting to sign-in')
+            setDbUser(null)
+            router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
+          }
+        })
+        .catch((err) => {
+          console.error('❌ Dashboard auth error:', err)
+          setDbUser(null)
+          router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
+        })
+        .finally(() => {
+          if (mounted) setAuthLoading(false)
+        })
+    }
+    
+    // Longer delay for production to ensure cookies are available
+    // Vercel has more network latency than localhost
+    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    const delay = isProduction ? 200 : 50
+    
+    console.log(`🔍 Dashboard: Will check auth in ${delay}ms (production: ${isProduction})`)
+    const timer = setTimeout(checkAuth, delay)
+    
     return () => {
       mounted = false
+      clearTimeout(timer)
     }
-  }, [router])
+  }, [router, pathname])
 
   // Handle window resize to fix layout issues on minimize/restore
   useEffect(() => {
@@ -117,7 +146,7 @@ export default function DashboardLayout({
     // Force layout recalculation after navigation
     setTimeout(() => {
       // Trigger a reflow to ensure proper layout
-      const mainContent = document.querySelector('.main-content')
+      const mainContent = document.querySelector('.main-content') as HTMLElement
       if (mainContent) {
         mainContent.style.display = 'none'
         mainContent.offsetHeight // Trigger reflow
@@ -300,11 +329,18 @@ export default function DashboardLayout({
                     
                     try {
                       console.log('🔴 LOGOUT: Starting logout process...')
-                      await signOut()
-                      router.push('/')
+                      
+                      // Call logout API
+                      await fetch('/api/auth/signout', { 
+                        method: 'POST',
+                        credentials: 'include'
+                      })
+                      
+                      // Force redirect
+                      window.location.href = '/'
                     } catch (error) {
                       console.error('🔴 LOGOUT ERROR:', error)
-                      router.push('/')
+                      window.location.href = '/'
                     } finally {
                       // Reset button state
                       button.style.opacity = '1'

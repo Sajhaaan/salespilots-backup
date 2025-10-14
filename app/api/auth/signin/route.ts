@@ -61,16 +61,30 @@ export async function POST(request: NextRequest) {
       },
     })
     
-    // Set authentication cookie in response headers
+    // Set authentication cookie in response headers with proper settings
+    // For Vercel/production, we need secure cookies
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+    
     response.cookies.set('sp_session', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
       sameSite: 'lax',
       expires: expiresAt,
       path: '/',
+      // Ensure cookie is sent with all requests
+      priority: 'high' as any,
     })
     
-    console.log('🍪 Cookie set in response headers')
+    console.log('🍪 Cookie set in response headers with settings:', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      expires: expiresAt.toISOString(),
+      environment: process.env.NODE_ENV,
+      isVercel: process.env.VERCEL === '1'
+    })
+    
     return response
   } catch (error) {
     console.error('Signin error:', error)

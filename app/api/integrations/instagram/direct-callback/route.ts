@@ -9,13 +9,13 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error')
     const errorReason = searchParams.get('error_reason')
     const errorDescription = searchParams.get('error_description')
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     console.log('📝 Direct callback params:', { code: !!code, error, errorReason, errorDescription })
 
     // Handle OAuth errors
     if (error) {
       console.log('❌ Direct OAuth error:', error, errorReason, errorDescription)
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       const redirectUrl = new URL('/dashboard/integrations', baseUrl)
       redirectUrl.searchParams.set('error', errorDescription || error)
       
@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
 
         // Exchange code for access token
         console.log('🔄 Exchanging OAuth code for access token...')
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
         const redirectUri = `${baseUrl}/api/integrations/instagram/direct-callback`
         const tokenUrl = 'https://graph.facebook.com/v18.0/oauth/access_token'
         const tokenParams = new URLSearchParams({
@@ -119,7 +118,6 @@ export async function GET(request: NextRequest) {
         // Success!
         console.log('✅ Direct Instagram OAuth completed successfully')
         
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
         const redirectUrl = new URL('/dashboard/integrations', baseUrl)
         redirectUrl.searchParams.set('success', `Instagram connected successfully! Username: ${instagramInfo.username}`)
         
@@ -128,7 +126,6 @@ export async function GET(request: NextRequest) {
       } catch (error) {
         console.error('❌ Direct Instagram OAuth callback error:', error)
         
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
         const redirectUrl = new URL('/dashboard/integrations', baseUrl)
         redirectUrl.searchParams.set('error', `Instagram OAuth failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         

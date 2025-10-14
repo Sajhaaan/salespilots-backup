@@ -96,12 +96,19 @@ export async function createSession(userId: string) {
 
 export async function setAuthCookie(token: string, expiresAt: Date) {
   const cookieStore = await cookies()
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
+  
   cookieStore.set(AUTH_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     expires: expiresAt,
     path: '/',
+  })
+  
+  console.log('🍪 Auth cookie set via setAuthCookie helper:', {
+    secure: isProduction,
+    expires: expiresAt.toISOString()
   })
 }
 
