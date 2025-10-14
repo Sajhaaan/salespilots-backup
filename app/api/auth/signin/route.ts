@@ -71,8 +71,6 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       expires: expiresAt,
       path: '/',
-      // Ensure cookie is sent with all requests
-      priority: 'high' as any,
     })
     
     console.log('🍪 Cookie set in response headers with settings:', {

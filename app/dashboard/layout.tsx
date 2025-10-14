@@ -96,7 +96,7 @@ export default function DashboardLayout({
     // Longer delay for production to ensure cookies are available
     // Vercel has more network latency than localhost
     const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    const delay = isProduction ? 200 : 50
+    const delay = isProduction ? 500 : 50
     
     console.log(`🔍 Dashboard: Will check auth in ${delay}ms (production: ${isProduction})`)
     const timer = setTimeout(checkAuth, delay)

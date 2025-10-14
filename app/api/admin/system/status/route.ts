@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
 
     // Check WhatsApp status
     try {
-      const whatsappToken = process.env.WHATSAPP_ACCESS_TOKEN
+      // Support both variable names for backward compatibility
+      const whatsappToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_BUSINESS_TOKEN
       const whatsappPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
       status.whatsapp = (whatsappToken && whatsappPhoneId) ? 'connected' : 'disconnected'
     } catch (error) {

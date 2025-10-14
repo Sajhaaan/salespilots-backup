@@ -64,7 +64,7 @@ export default function SignInPage() {
         
         // Longer delay for production/Vercel to ensure cookie is fully processed
         const isProduction = window.location.hostname !== 'localhost'
-        const delay = isProduction ? 300 : 100
+        const delay = isProduction ? 800 : 100
         
         console.log(`🔄 Redirecting to ${redirectTo} in ${delay}ms...`)
         

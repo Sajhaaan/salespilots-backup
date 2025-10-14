@@ -98,15 +98,20 @@ INSTAGRAM_APP_SECRET=your_app_secret_here
 
 #### Local Development (.env.local)
 ```bash
+# Both variable names supported for compatibility
+WHATSAPP_ACCESS_TOKEN=your_permanent_access_token_here
 WHATSAPP_BUSINESS_TOKEN=your_permanent_access_token_here
 WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id_here
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=your_random_webhook_verify_token_here
 ```
 
 #### Vercel Production
 1. Go to Vercel project → **Settings → Environment Variables**
 2. Add:
-   - Name: `WHATSAPP_BUSINESS_TOKEN` | Value: `your_token`
+   - Name: `WHATSAPP_ACCESS_TOKEN` | Value: `your_token`
+   - Name: `WHATSAPP_BUSINESS_TOKEN` | Value: `your_token` (same as above)
    - Name: `WHATSAPP_PHONE_NUMBER_ID` | Value: `your_phone_number_id`
+   - Name: `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | Value: `your_verify_token`
 3. Save and redeploy
 
 ---

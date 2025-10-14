@@ -166,7 +166,8 @@ async function processWhatsAppMessage(message: any, webhookValue: any) {
 // Helper function to send message via WhatsApp Business API
 async function sendWhatsAppMessage(toNumber: string, message: string) {
   try {
-    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+    // Support both variable names for backward compatibility
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_BUSINESS_TOKEN
     const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
 
     if (!accessToken || !phoneNumberId) {

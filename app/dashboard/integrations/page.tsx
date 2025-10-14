@@ -498,16 +498,16 @@ export default function IntegrationsPage() {
                   : 'bg-white/5 border-white/10 hover:border-white/20'
               }`}>
                 {/* Live Indicator for Connected Integrations */}
-                {isConnected && (
-                  <div className="absolute top-0 right-0 m-4">
-                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-full">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-medium text-green-400">LIVE</span>
+                  {isConnected && (
+                    <div className="absolute top-0 right-0 m-4">
+                      <div className="flex items-center space-x-2 px-3 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-500/30 rounded-full">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium text-green-400">LIVE</span>
+                      </div>
                     </div>
-                  </div>
-                )}
-                
-                <div className="p-6">
+                  )}
+                  
+                  <div className="p-6">
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center space-x-4">
                       <div className={`relative w-14 h-14 bg-gradient-to-br ${integration.color} rounded-2xl flex items-center justify-center shadow-lg ${isConnected ? 'ring-2 ring-green-400/20' : ''}`}>
