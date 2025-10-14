@@ -12,7 +12,19 @@ export async function GET(request: NextRequest) {
 
     // Find user in database (optional)
     const user = await ProductionDB.findUserByAuthId(authUser.id)
-    if (!user) {
+    
+    // Check Instagram connection from environment variables (fallback for Vercel)
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    const envInstagramConfig = envInstagramConnected ? {
+      pageId: process.env.INSTAGRAM_PAGE_ID,
+      pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
+      instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
+      username: process.env.INSTAGRAM_USERNAME,
+      expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(),
+      createdAt: new Date().toISOString()
+    } : null
+    
+    if (!user && !envInstagramConnected) {
       return NextResponse.json({
         success: true,
         status: 'not_connected',
@@ -25,8 +37,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Check if user has Instagram credentials
-    const hasInstagramConfig = !!(user.instagramConfig && user.instagramConnected)
+    // Check if user has Instagram credentials (from DB or env vars)
+    const hasInstagramConfig = !!(user?.instagramConfig && user?.instagramConnected) || envInstagramConnected
     
     if (!hasInstagramConfig) {
       return NextResponse.json({
@@ -41,20 +53,14 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Validate the Instagram credentials
-    const isValid = await InstagramAuth.validateCredentials(authUser.id)
+    // Use database config or environment config
+    const config = user?.instagramConfig || envInstagramConfig
     
-    if (!isValid) {
-      // Clear invalid credentials
-      await ProductionDB.updateUser(user.id, {
-        instagramConnected: false,
-        instagramConfig: null
-      })
-
+    if (!config) {
       return NextResponse.json({
         success: true,
-        status: 'disconnected',
-        message: 'Instagram connection expired or invalid',
+        status: 'not_connected',
+        message: 'Instagram configuration missing',
         user: {
           instagramConnected: false,
           instagramHandle: null,
@@ -64,7 +70,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Get Instagram account info
-    const config = user.instagramConfig
     let instagramInfo = null
 
     try {
@@ -89,7 +94,7 @@ export async function GET(request: NextRequest) {
       message: 'Instagram connected successfully',
       user: {
         instagramConnected: true,
-        instagramHandle: instagramInfo?.username || 'Unknown',
+        instagramHandle: instagramInfo?.username || config.username || process.env.INSTAGRAM_USERNAME || 'Unknown',
         instagramConfig: {
           pageId: config.pageId,
           instagramBusinessAccountId: config.instagramBusinessAccountId,

@@ -21,12 +21,27 @@ export async function GET(request: NextRequest) {
     if (user) {
       console.log('✅ User profile found:', user.id, 'Instagram connected:', user.instagramConnected)
     } else {
-      console.log('ℹ️ No user profile found - using default disconnected status')
+      console.log('ℹ️ No user profile found - checking environment variables')
     }
 
+    // Check Instagram connection from environment variables (fallback for Vercel)
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    const envInstagramHandle = process.env.INSTAGRAM_USERNAME
+    
+    // Use database data or fall back to environment variables
+    const instagramConnected = user?.instagramConnected || envInstagramConnected
+    const instagramHandle = user?.instagramHandle || envInstagramHandle
+    
+    console.log('🔍 Instagram status:', {
+      dbConnected: user?.instagramConnected,
+      envConnected: envInstagramConnected,
+      finalConnected: instagramConnected,
+      handle: instagramHandle
+    })
+
     // Check Instagram token validity (simplified check)
-    const instagramStatus = user?.instagramConnected && user?.instagramHandle ? 'active' : 
-                           user?.instagramConnected ? 'error' : 'disconnected'
+    const instagramStatus = instagramConnected && instagramHandle ? 'active' : 
+                           instagramConnected ? 'error' : 'disconnected'
     
     // Check WhatsApp status (simplified check)
     const whatsappStatus = user?.whatsappConnected ? 'active' : 'disconnected'
@@ -35,11 +50,13 @@ export async function GET(request: NextRequest) {
       success: true,
       integrations: {
         instagram: {
-          connected: user?.instagramConnected || false,
+          connected: instagramConnected,
           status: instagramStatus,
-          account: user?.instagramHandle || null,
-          lastSync: user?.instagramConnected ? user.createdAt : null,
-          hasValidToken: !!user?.instagramHandle
+          account: instagramHandle || null,
+          lastSync: instagramConnected ? (user?.createdAt || new Date().toISOString()) : null,
+          hasValidToken: !!instagramHandle,
+          messages: 0,
+          customers: 0
         },
         whatsapp: {
           connected: user?.whatsappConnected || false,
