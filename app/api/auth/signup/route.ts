@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
     const { email, password, firstName, lastName } = await request.json()
     console.log('📧 Signup attempt for:', email)
 
-    // Validate input
-    if (!email || !password || !firstName || !lastName) {
+    // Validate input (lastName is optional)
+    if (!email || !password || !firstName) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'Email, password, and first name are required' },
         { 
           status: 400,
           headers: {
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       passwordHash,
       firstName,
-      lastName,
+      lastName: lastName || '',
       emailVerified: false,
     })
 
@@ -87,8 +87,8 @@ export async function POST(request: NextRequest) {
       authUserId: authUser.id,
       email: email.toLowerCase(),
       firstName: firstName,
-      lastName: lastName,
-      businessName: `${firstName} ${lastName}'s Business`,
+      lastName: lastName || '',
+      businessName: lastName ? `${firstName} ${lastName}'s Business` : `${firstName}'s Business`,
       instagramHandle: '',
       subscriptionPlan: 'free',
       instagramConnected: false,
