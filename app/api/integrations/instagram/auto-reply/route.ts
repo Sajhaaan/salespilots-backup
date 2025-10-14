@@ -17,10 +17,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Update auto-reply setting
+    // Update auto-reply setting (use snake_case for database columns)
     await ProductionDB.updateUser(user.id, {
-      instagramAutoReply: enabled,
-      instagramAutoReplyUpdatedAt: new Date().toISOString()
+      automation_enabled: enabled,
+      instagram_auto_reply: enabled,
+      updated_at: new Date().toISOString()
     })
 
     return NextResponse.json({
@@ -53,8 +54,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      autoReplyEnabled: user.instagramAutoReply || false,
-      lastUpdated: user.instagramAutoReplyUpdatedAt
+      autoReplyEnabled: user.automation_enabled || user.instagram_auto_reply || false,
+      lastUpdated: user.updated_at
     })
 
   } catch (error) {
