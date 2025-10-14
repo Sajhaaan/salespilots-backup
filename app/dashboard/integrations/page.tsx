@@ -357,12 +357,19 @@ export default function IntegrationsPage() {
       
       if (data.success) {
         toast.success('Instagram disconnected successfully')
-        fetchInstagramStatus()
+        // Refresh all data
+        await Promise.all([
+          fetchIntegrations(),
+          fetchInstagramStatus(),
+          fetchUserData()
+        ])
       } else {
-        toast.error(data.error || 'Failed to disconnect Instagram')
+        console.error('Disconnect error:', data)
+        toast.error(data.details || data.error || 'Failed to disconnect Instagram')
       }
-    } catch (error) {
-      toast.error('Failed to disconnect Instagram')
+    } catch (error: any) {
+      console.error('Disconnect exception:', error)
+      toast.error(error?.message || 'Failed to disconnect Instagram')
     } finally {
       setLoading(false)
     }
