@@ -89,7 +89,8 @@ export default function SignUpPage() {
 
       if (data.ok) {
         toast.success('Account created successfully!')
-        router.push('/dashboard')
+        // Use window.location.href for a full page reload to ensure cookies are available
+        window.location.href = '/dashboard'
       } else {
         toast.error(data.error || 'Sign up failed')
       }

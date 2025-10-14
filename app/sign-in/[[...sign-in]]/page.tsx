@@ -59,7 +59,8 @@ export default function SignInPage() {
         toast.success('Welcome back!')
         // Redirect to the intended page or dashboard
         const redirectTo = searchParams.get('redirect') || '/dashboard'
-        router.push(redirectTo)
+        // Use window.location.href for a full page reload to ensure cookies are available
+        window.location.href = redirectTo
       } else {
         toast.error(data.error || 'Sign in failed')
       }
