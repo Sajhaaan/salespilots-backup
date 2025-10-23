@@ -65,9 +65,51 @@ export default function DashboardLayout({
     let mounted = true
     setAuthLoading(true)
     
-    // Small delay to ensure cookies from login are available
+    // Check localStorage first (fallback for Vercel cookie issues)
     const checkAuth = () => {
       console.log('🔍 Dashboard: Starting auth check...')
+      
+      // First, check localStorage for immediate feedback
+      const localAuth = localStorage.getItem('sp_auth')
+      const localUser = localStorage.getItem('sp_user')
+      
+      if (localAuth === 'true' && localUser) {
+        try {
+          const user = JSON.parse(localUser)
+          console.log('✅ Dashboard: User found in localStorage:', user.email)
+          setDbUser(user)
+          setAuthLoading(false)
+          // Still verify with server in background
+          fetch('/api/auth/me', { 
+            method: 'GET', 
+            credentials: 'include', 
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          })
+            .then(r => r.json())
+            .then(res => {
+              if (mounted && res?.ok && res?.user) {
+                console.log('✅ Dashboard: Server confirmed authentication')
+                setDbUser(res.user)
+                fetchHeaderStats()
+              } else if (mounted && !res?.ok) {
+                console.log('⚠️ Dashboard: Server auth failed, but localStorage shows logged in')
+                // Keep user logged in based on localStorage for now
+                fetchHeaderStats()
+              }
+            })
+            .catch(err => {
+              console.log('⚠️ Dashboard: Server check failed, using localStorage:', err)
+            })
+          return
+        } catch (e) {
+          console.error('Error parsing localStorage user:', e)
+        }
+      }
+      
+      // If no localStorage, check with server
       fetch('/api/auth/me', { 
         method: 'GET', 
         credentials: 'include', 
@@ -86,16 +128,22 @@ export default function DashboardLayout({
           if (res?.ok && res?.user) {
             console.log('✅ Dashboard: User authenticated:', res.user.email)
             setDbUser(res.user)
+            localStorage.setItem('sp_user', JSON.stringify(res.user))
+            localStorage.setItem('sp_auth', 'true')
             // Fetch header stats after user is authenticated
             fetchHeaderStats()
           } else {
             console.log('❌ Dashboard: User not authenticated, redirecting to sign-in')
+            localStorage.removeItem('sp_user')
+            localStorage.removeItem('sp_auth')
             setDbUser(null)
             router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
           }
         })
         .catch((err) => {
           console.error('❌ Dashboard auth error:', err)
+          localStorage.removeItem('sp_user')
+          localStorage.removeItem('sp_auth')
           setDbUser(null)
           router.replace('/sign-in?redirect=' + encodeURIComponent(pathname))
         })
@@ -104,17 +152,11 @@ export default function DashboardLayout({
         })
     }
     
-    // Longer delay for production to ensure cookies are available
-    // Vercel has more network latency than localhost
-    const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    const delay = isProduction ? 500 : 50
-    
-    console.log(`🔍 Dashboard: Will check auth in ${delay}ms (production: ${isProduction})`)
-    const timer = setTimeout(checkAuth, delay)
+    // Immediate check for localStorage, no delay needed
+    checkAuth()
     
     return () => {
       mounted = false
-      clearTimeout(timer)
     }
   }, [router, pathname])
 

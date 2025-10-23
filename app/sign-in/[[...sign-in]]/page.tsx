@@ -59,18 +59,19 @@ export default function SignInPage() {
         toast.success('Welcome back!')
         console.log('✅ Login successful, user data:', data.user)
         
+        // Store user in localStorage as backup (for Vercel serverless issues)
+        localStorage.setItem('sp_user', JSON.stringify(data.user))
+        localStorage.setItem('sp_auth', 'true')
+        console.log('💾 User stored in localStorage')
+        
         // Redirect to the intended page or dashboard
         const redirectTo = searchParams.get('redirect') || '/dashboard'
         
-        // Longer delay for production/Vercel to ensure cookie is fully processed
-        const isProduction = window.location.hostname !== 'localhost'
-        const delay = isProduction ? 800 : 100
+        // Force a hard reload to ensure cookies are properly set
+        console.log(`🔄 Redirecting to ${redirectTo}...`)
         
-        console.log(`🔄 Redirecting to ${redirectTo} in ${delay}ms...`)
-        
-        setTimeout(() => {
-          window.location.href = redirectTo
-        }, delay)
+        // Use replace to avoid back button issues
+        window.location.replace(redirectTo)
       } else {
         console.error('❌ Login failed:', data.error)
         toast.error(data.error || 'Sign in failed')
