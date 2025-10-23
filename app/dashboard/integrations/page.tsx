@@ -119,7 +119,9 @@ export default function IntegrationsPage() {
   const fetchInstagramStatus = async () => {
     try {
       const cacheBuster = `?t=${Date.now()}`
-      const response = await fetch(`/api/integrations/instagram/status${cacheBuster}`, {
+      
+      // Use the simpler connected endpoint that just checks env vars
+      const response = await fetch(`/api/integrations/instagram/connected${cacheBuster}`, {
         credentials: 'include',
         cache: 'no-store',
         headers: {
@@ -129,11 +131,19 @@ export default function IntegrationsPage() {
       })
       const data = await response.json()
       
+      console.log('🔍 Instagram Connected API Response:', data)
+      
       if (data.success) {
+        const isConnected = data.connected
+        const handle = data.username
+        
         setInstagramConfig({
-          status: data.status,
+          status: isConnected ? 'connected' : 'not_connected',
           message: data.message,
-          user: data.user
+          user: {
+            instagramConnected: isConnected,
+            instagramHandle: handle
+          }
         })
         
         // Update integrations list with real status
@@ -141,12 +151,14 @@ export default function IntegrationsPage() {
           integration.id === 'instagram' 
             ? { 
                 ...integration, 
-                connected: !!data.user?.instagramConnected,
-                status: data.status,
-                handle: data.user?.instagramHandle || undefined
+                connected: isConnected,
+                status: isConnected ? 'connected' : 'disconnected',
+                handle: handle || undefined
               }
             : integration
         ))
+        
+        console.log('✅ Instagram status updated:', { connected: isConnected, handle })
       }
     } catch (error) {
       console.error('Error fetching Instagram status:', error)
