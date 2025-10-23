@@ -6,15 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔌 Instagram disconnect request received')
     
-    const authUser = await getAuthUserFromRequest(request)
-    console.log('👤 Auth user:', authUser ? authUser.id : 'none')
-    
-    if (!authUser) {
-      console.log('❌ No authenticated user')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Check if Instagram is connected via environment variables
+    // Check if Instagram is connected via environment variables FIRST
+    // This doesn't require authentication to check
     const hasEnvCredentials = !!(
       process.env.INSTAGRAM_PAGE_ID && 
       process.env.INSTAGRAM_PAGE_ACCESS_TOKEN && 
@@ -27,9 +20,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         success: false,
         error: 'Cannot disconnect Instagram',
-        details: 'Instagram is connected via environment variables. Please remove the Instagram credentials from your Vercel environment variables to disconnect.',
+        details: 'Instagram is connected via environment variables. To disconnect, go to Vercel → Project Settings → Environment Variables and remove all INSTAGRAM_* variables.',
         isEnvBased: true
-      }, { status: 400 })
+      }, { status: 200 }) // Changed to 200 so it's not treated as an error
+    }
+    
+    // Only check authentication if we need to disconnect database-based connection
+    const authUser = await getAuthUserFromRequest(request)
+    console.log('👤 Auth user:', authUser ? authUser.id : 'none')
+    
+    if (!authUser) {
+      console.log('❌ No authenticated user')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Find user profile
