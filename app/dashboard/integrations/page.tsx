@@ -99,6 +99,7 @@ export default function IntegrationsPage() {
     try {
       const cacheBuster = `?t=${Date.now()}`
       const response = await fetch(`/api/user/profile${cacheBuster}`, {
+        credentials: 'include',
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
