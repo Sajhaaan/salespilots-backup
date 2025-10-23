@@ -112,57 +112,63 @@ export class ProductionDB {
       console.log('🔍 Database: supabase available:', !!supabase)
       
       if (isProductionDB && supabase) {
-        // Use Supabase in production
-        console.log('🔍 Database: Using Supabase for auth query')
-        const { data, error } = await supabase
-          .from('auth_users')
-          .select('*')
-          .eq('email', email.toLowerCase())
-          .single()
-        
-        if (error) {
-          console.log('❌ Supabase auth query error:', error.message)
-          return null
-        }
-        console.log('✅ Database: User found in Supabase:', !!data)
-        
-        // Transform snake_case to camelCase
-        if (data) {
-          const dbUser = data as AuthUserDB
-          return {
-            id: dbUser.id,
-            email: dbUser.email,
-            passwordHash: dbUser.password_hash,
-            firstName: dbUser.first_name,
-            lastName: dbUser.last_name,
-            emailVerified: dbUser.email_verified,
-            role: dbUser.role,
-            createdAt: dbUser.created_at,
-            updatedAt: dbUser.updated_at
+        // Try Supabase first
+        console.log('🔍 Database: Trying Supabase for auth query')
+        try {
+          const { data, error } = await supabase
+            .from('auth_users')
+            .select('*')
+            .eq('email', email.toLowerCase())
+            .single()
+          
+          if (error) {
+            console.log('⚠️ Supabase auth query error:', error.message)
+            console.log('🔄 Falling back to in-memory demo users')
+            // Fall back to in-memory users
+          } else if (data) {
+            console.log('✅ Database: User found in Supabase')
+            // Transform snake_case to camelCase
+            const dbUser = data as AuthUserDB
+            return {
+              id: dbUser.id,
+              email: dbUser.email,
+              passwordHash: dbUser.password_hash,
+              firstName: dbUser.first_name,
+              lastName: dbUser.last_name,
+              emailVerified: dbUser.email_verified,
+              role: dbUser.role,
+              createdAt: dbUser.created_at,
+              updatedAt: dbUser.updated_at
+            }
           }
+        } catch (supabaseError) {
+          console.log('❌ Supabase error, falling back to in-memory:', supabaseError)
         }
-        return null
-      } else {
-        // Use in-memory storage for demo
-        console.log('🔍 Database: Using in-memory storage for auth query')
-        
-        // In Vercel, we need to ensure demo users exist on every request
-        if (process.env.VERCEL && inMemoryAuthUsers.length === 0) {
-          console.log('🔄 In-memory users empty in Vercel - seeding now')
-          await this.createDefaultDemoUsers()
-        }
-        
-        const user = inMemoryAuthUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || null
-        console.log('✅ Database: User found in memory:', !!user)
-        console.log('📊 Total users in memory:', inMemoryAuthUsers.length)
-        if (inMemoryAuthUsers.length > 0) {
-          console.log('👥 Available users:', inMemoryAuthUsers.map(u => u.email).join(', '))
-        }
-        return user
       }
+      
+      // Use in-memory storage as fallback or when Supabase is not configured
+      console.log('🔍 Database: Using in-memory storage for auth query')
+      
+      // Ensure demo users exist
+      if (inMemoryAuthUsers.length === 0) {
+        console.log('🔄 In-memory users empty - seeding now')
+        await this.createDefaultDemoUsers()
+      }
+      
+      const user = inMemoryAuthUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || null
+      console.log('✅ Database: User found in memory:', !!user)
+      console.log('📊 Total users in memory:', inMemoryAuthUsers.length)
+      if (inMemoryAuthUsers.length > 0) {
+        console.log('👥 Available users:', inMemoryAuthUsers.map(u => u.email).join(', '))
+      }
+      return user
     } catch (error) {
       console.error('❌ Find auth user error:', error)
-      return null
+      // Last resort: try to seed demo users
+      if (inMemoryAuthUsers.length === 0) {
+        await this.createDefaultDemoUsers()
+      }
+      return inMemoryAuthUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || null
     }
   }
 
