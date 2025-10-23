@@ -14,7 +14,15 @@ export async function GET(request: NextRequest) {
     const user = await ProductionDB.findUserByAuthId(authUser.id)
     
     // Check environment variables first (for Vercel deployments)
-    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    // More lenient check - if we have the required Instagram credentials, consider it connected
+    const hasInstagramCredentials = !!(
+      process.env.INSTAGRAM_PAGE_ID && 
+      process.env.INSTAGRAM_PAGE_ACCESS_TOKEN && 
+      process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID &&
+      process.env.INSTAGRAM_USERNAME
+    )
+    
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true' || hasInstagramCredentials
     const envConfig = envInstagramConnected ? {
       pageId: process.env.INSTAGRAM_PAGE_ID,
       pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
