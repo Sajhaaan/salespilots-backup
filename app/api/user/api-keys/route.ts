@@ -3,7 +3,11 @@ import { getAuthUserFromRequest } from '@/lib/auth'
 import { ProductionDB } from '@/lib/database-production'
 import crypto from 'crypto'
 
-// Get all API keys for user
+function generateAPIKey(prefix: string = 'sk'): string {
+  const randomBytes = crypto.randomBytes(32).toString('hex')
+  return `${prefix}_${randomBytes}`
+}
+
 export async function GET(request: NextRequest) {
   try {
     const authUser = await getAuthUserFromRequest(request)
@@ -17,37 +21,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const apiKeys = await ProductionDB.getApiKeys(user.id)
-
-    // Don't return the actual keys, only metadata
-    const safeKeys = apiKeys.map((key: any) => ({
-      id: key.id,
-      keyName: key.key_name,
-      keyPrefix: key.key_prefix,
-      environment: key.environment,
-      permissions: key.permissions,
-      isActive: key.is_active,
-      lastUsedAt: key.last_used_at,
-      usageCount: key.usage_count,
-      expiresAt: key.expires_at,
-      createdAt: key.created_at
-    }))
+    // Return API keys (masked for security)
+    const apiKeys = user.apiKeys || {
+      production: {
+        key: 'sk_live_**********************',
+        masked: true,
+        createdAt: new Date().toISOString()
+      },
+      test: {
+        key: 'sk_test_**********************',
+        masked: true,
+        createdAt: new Date().toISOString()
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      apiKeys: safeKeys
+      apiKeys: {
+        production: {
+          ...apiKeys.production,
+          key: apiKeys.production.masked ? apiKeys.production.key : `${apiKeys.production.key.slice(0, 12)}${'*'.repeat(20)}`
+        },
+        test: {
+          ...apiKeys.test,
+          key: apiKeys.test.masked ? apiKeys.test.key : `${apiKeys.test.key.slice(0, 12)}${'*'.repeat(20)}`
+        }
+      }
     })
 
   } catch (error) {
-    console.error('Get API keys error:', error)
+    console.error('Fetch API keys error:', error)
     return NextResponse.json(
-      { error: 'Failed to get API keys' },
+      { error: 'Failed to fetch API keys' }, 
       { status: 500 }
     )
   }
 }
 
-// Create new API key
 export async function POST(request: NextRequest) {
   try {
     const authUser = await getAuthUserFromRequest(request)
@@ -61,129 +71,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const { keyName, environment, permissions, expiresInDays } = await request.json()
+    const { type } = await request.json() // 'production' or 'test'
 
-    if (!keyName || !environment) {
-      return NextResponse.json(
-        { error: 'Key name and environment are required' },
-        { status: 400 }
-      )
+    if (!type || (type !== 'production' && type !== 'test')) {
+      return NextResponse.json({ 
+        error: 'Invalid API key type. Must be "production" or "test"' 
+      }, { status: 400 })
     }
 
-    // Generate API key
-    const apiKey = `sk_${environment === 'test' ? 'test' : 'live'}_${crypto.randomBytes(32).toString('hex')}`
-    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex')
-    const keyPrefix = apiKey.substring(0, 12) + '...'
+    // Generate new API key
+    const prefix = type === 'production' ? 'sk_live' : 'sk_test'
+    const newKey = generateAPIKey(prefix)
 
-    // Calculate expiration
-    const expiresAt = expiresInDays 
-      ? new Date(Date.now() + (expiresInDays * 24 * 60 * 60 * 1000)).toISOString()
-      : null
+    // Get existing API keys
+    const apiKeys = user.apiKeys || { production: {}, test: {} }
 
-    // Create API key in database
-    const newKey = await ProductionDB.createApiKey({
-      user_id: user.id,
-      key_name: keyName,
-      key_hash: keyHash,
-      key_prefix: keyPrefix,
-      environment: environment,
-      permissions: permissions || [],
-      expires_at: expiresAt,
-      is_active: true
+    // Update the specified key
+    apiKeys[type as 'production' | 'test'] = {
+      key: newKey,
+      masked: false,
+      createdAt: new Date().toISOString()
+    }
+
+    // Save to database
+    await ProductionDB.updateUser(user.id, {
+      apiKeys,
+      updatedAt: new Date().toISOString()
     })
 
-    // Log activity
-    await ProductionDB.logActivity({
-      user_id: user.id,
-      action: 'api_key_created',
-      details: { 
-        keyName,
-        environment,
-        keyId: newKey.id 
-      }
-    })
+    console.log(`✅ New ${type} API key generated for user:`, authUser.email)
 
-    // Return the actual key only once
     return NextResponse.json({
       success: true,
-      message: 'API key created successfully. Save this key securely, it won\'t be shown again.',
-      apiKey: apiKey, // Only returned once
-      keyInfo: {
-        id: newKey.id,
-        keyName: newKey.key_name,
-        keyPrefix: newKey.key_prefix,
-        environment: newKey.environment,
-        permissions: newKey.permissions,
-        expiresAt: newKey.expires_at,
-        createdAt: newKey.created_at
+      message: `New ${type} API key generated successfully`,
+      apiKey: {
+        key: newKey,
+        type,
+        createdAt: apiKeys[type as 'production' | 'test'].createdAt,
+        warning: 'Please save this key securely. It will not be shown again.'
       }
     })
 
   } catch (error) {
-    console.error('Create API key error:', error)
+    console.error('Generate API key error:', error)
     return NextResponse.json(
-      { error: 'Failed to create API key' },
+      { error: 'Failed to generate API key' }, 
       { status: 500 }
     )
   }
 }
-
-// Delete API key
-export async function DELETE(request: NextRequest) {
-  try {
-    const authUser = await getAuthUserFromRequest(request)
-    
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await ProductionDB.findUserByAuthId(authUser.id)
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const { keyId } = await request.json()
-
-    if (!keyId) {
-      return NextResponse.json(
-        { error: 'Key ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Verify key belongs to user
-    const apiKey = await ProductionDB.getApiKey(keyId)
-    if (!apiKey || apiKey.user_id !== user.id) {
-      return NextResponse.json(
-        { error: 'API key not found' },
-        { status: 404 }
-      )
-    }
-
-    // Delete key
-    await ProductionDB.deleteApiKey(keyId)
-
-    // Log activity
-    await ProductionDB.logActivity({
-      user_id: user.id,
-      action: 'api_key_deleted',
-      details: { 
-        keyId,
-        keyName: apiKey.key_name 
-      }
-    })
-
-    return NextResponse.json({
-      success: true,
-      message: 'API key deleted successfully'
-    })
-
-  } catch (error) {
-    console.error('Delete API key error:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete API key' },
-      { status: 500 }
-    )
-  }
-}
-

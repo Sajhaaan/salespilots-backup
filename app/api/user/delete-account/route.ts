@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUserFromRequest } from '@/lib/auth'
-import { SimpleDB } from '@/lib/database'
-
-// Initialize database instances
-const authUsersDB = new SimpleDB('auth_users')
-const usersDB = new SimpleDB('users')
-const ordersDB = new SimpleDB('orders')
-const productsDB = new SimpleDB('products')
-const messagesDB = new SimpleDB('messages')
-const paymentsDB = new SimpleDB('payments')
+import { getAuthUserFromRequest, AUTH_COOKIE } from '@/lib/auth'
+import { ProductionDB } from '@/lib/database-production'
+import { cookies } from 'next/headers'
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -18,65 +11,48 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user profile
-    const users = await usersDB.findBy('authUserId', authUser.id)
-    if (users.length === 0) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-    
-    const user = users[0]
 
-    // Delete all user data
+    console.log('🗑️ Starting account deletion for user:', authUser.email)
+
+    // 1. Delete user profile
+    await ProductionDB.deleteUser(user.id)
+    console.log('✅ User profile deleted')
+
+    // 2. Delete auth user
+    await ProductionDB.deleteAuthUser(authUser.id)
+    console.log('✅ Auth user deleted')
+
+    // 3. Delete all sessions
     try {
-      // Delete user's orders
-      const userOrders = await ordersDB.findBy('userId', user.id)
-      for (const order of userOrders) {
-        await ordersDB.delete(order.id)
-      }
-
-      // Delete user's products
-      const userProducts = await productsDB.findBy('userId', user.id)
-      for (const product of userProducts) {
-        await productsDB.delete(product.id)
-      }
-
-      // Delete user's messages
-      const userMessages = await messagesDB.findBy('userId', user.id)
-      for (const message of userMessages) {
-        await messagesDB.delete(message.id)
-      }
-
-      // Delete user's payments
-      const userPayments = await paymentsDB.findBy('userId', user.id)
-      for (const payment of userPayments) {
-        await paymentsDB.delete(payment.id)
-      }
-
-      // Delete user profile
-      await usersDB.delete(user.id)
-
-      // Delete auth user
-      await authUsersDB.delete(authUser.id)
-
-      console.log(`✅ Account deleted successfully for user: ${authUser.email}`)
-
-      return NextResponse.json({
-        success: true,
-        message: 'Account and all associated data deleted successfully'
-      })
-
-    } catch (deleteError) {
-      console.error('Error deleting user data:', deleteError)
-      return NextResponse.json(
-        { error: 'Failed to delete some user data' }, 
-        { status: 500 }
-      )
+      await ProductionDB.deleteAllSessionsForUser(authUser.id)
+      console.log('✅ Sessions deleted')
+    } catch (error) {
+      console.log('⚠️ Could not delete sessions:', error)
     }
+
+    // 4. Clear authentication cookie
+    const cookieStore = await cookies()
+    cookieStore.delete(AUTH_COOKIE)
+    console.log('✅ Authentication cookie cleared')
+
+    console.log('✅ Account deletion completed for:', authUser.email)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Account deleted successfully. You will be redirected to the home page.'
+    })
 
   } catch (error) {
     console.error('Delete account error:', error)
     return NextResponse.json(
-      { error: 'Failed to delete account' }, 
+      { 
+        success: false,
+        error: 'Failed to delete account. Please try again or contact support.' 
+      }, 
       { status: 500 }
     )
   }

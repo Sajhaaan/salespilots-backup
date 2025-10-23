@@ -887,6 +887,136 @@ export class ProductionDB {
       return []
     }
   }
+
+  static async updateAuthUser(userId: string, updates: Partial<AuthUser>): Promise<AuthUser | null> {
+    try {
+      if (isProductionDB && supabase) {
+        const { data, error } = await supabase
+          .from('auth_users')
+          .update({
+            password_hash: updates.passwordHash,
+            updated_at: updates.updatedAt || new Date().toISOString()
+          })
+          .eq('id', userId)
+          .select()
+          .single()
+
+        if (error) {
+          console.error('❌ Update auth user error:', error)
+          return null
+        }
+
+        return {
+          id: data.id,
+          email: data.email,
+          passwordHash: data.password_hash,
+          firstName: data.first_name,
+          lastName: data.last_name,
+          emailVerified: data.email_verified,
+          role: data.role,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        }
+      } else {
+        // Update in-memory auth user
+        const userIndex = inMemoryAuthUsers.findIndex(u => u.id === userId)
+        if (userIndex === -1) return null
+
+        inMemoryAuthUsers[userIndex] = {
+          ...inMemoryAuthUsers[userIndex],
+          ...updates
+        }
+
+        return inMemoryAuthUsers[userIndex]
+      }
+    } catch (error) {
+      console.error('❌ Update auth user error:', error)
+      return null
+    }
+  }
+
+  static async deleteAuthUser(userId: string): Promise<boolean> {
+    try {
+      if (isProductionDB && supabase) {
+        const { error } = await supabase
+          .from('auth_users')
+          .delete()
+          .eq('id', userId)
+
+        if (error) {
+          console.error('❌ Delete auth user error:', error)
+          return false
+        }
+
+        return true
+      } else {
+        // Delete from in-memory
+        const index = inMemoryAuthUsers.findIndex(u => u.id === userId)
+        if (index !== -1) {
+          inMemoryAuthUsers.splice(index, 1)
+          return true
+        }
+        return false
+      }
+    } catch (error) {
+      console.error('❌ Delete auth user error:', error)
+      return false
+    }
+  }
+
+  static async deleteUser(userId: string): Promise<boolean> {
+    try {
+      if (isProductionDB && supabase) {
+        const { error } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', userId)
+
+        if (error) {
+          console.error('❌ Delete user error:', error)
+          return false
+        }
+
+        return true
+      } else {
+        // Delete from in-memory
+        const index = inMemoryUsers.findIndex(u => u.id === userId)
+        if (index !== -1) {
+          inMemoryUsers.splice(index, 1)
+          return true
+        }
+        return false
+      }
+    } catch (error) {
+      console.error('❌ Delete user error:', error)
+      return false
+    }
+  }
+
+  static async deleteAllSessionsForUser(userId: string): Promise<boolean> {
+    try {
+      if (isProductionDB && supabase) {
+        const { error} = await supabase
+          .from('sessions')
+          .delete()
+          .eq('user_id', userId)
+
+        if (error) {
+          console.error('❌ Delete sessions error:', error)
+          return false
+        }
+
+        return true
+      } else {
+        // Delete from in-memory
+        inMemorySessions = inMemorySessions.filter(s => s.userId !== userId)
+        return true
+      }
+    } catch (error) {
+      console.error('❌ Delete sessions error:', error)
+      return false
+    }
+  }
 }
 
 // Export database status
