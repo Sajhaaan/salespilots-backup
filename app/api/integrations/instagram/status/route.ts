@@ -13,24 +13,29 @@ export async function GET(request: NextRequest) {
     // Find user in database
     const user = await ProductionDB.findUserByAuthId(authUser.id)
     
-    if (!user) {
-      return NextResponse.json({
-        success: true,
-        status: 'not_connected',
-        message: 'Instagram not connected',
-        user: {
-          instagramConnected: false,
-          instagramHandle: null,
-          instagramConfig: null
-        }
-      })
-    }
-
-    // Check if user has Instagram credentials (check BOTH camelCase and snake_case for compatibility)
-    const hasInstagramConfig = !!((user?.instagramConfig || (user as any)?.instagram_config) && 
-                                  (user?.instagramConnected || (user as any)?.instagram_connected))
+    // Check environment variables first (for Vercel deployments)
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    const envConfig = envInstagramConnected ? {
+      pageId: process.env.INSTAGRAM_PAGE_ID,
+      pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
+      instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
+      username: process.env.INSTAGRAM_USERNAME,
+      expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(),
+      createdAt: new Date().toISOString()
+    } : null
     
-    if (!hasInstagramConfig) {
+    // Check if user has Instagram credentials in database
+    let config = user ? (user?.instagramConfig || (user as any)?.instagram_config) : null
+    let instagramConnected = user ? !!(user?.instagramConnected || (user as any)?.instagram_connected) : false
+    
+    // Fallback to environment variables if no database config
+    if (!config && envConfig) {
+      config = envConfig
+      instagramConnected = true
+      console.log('📱 Using Instagram credentials from environment variables')
+    }
+    
+    if (!config || !instagramConnected) {
       return NextResponse.json({
         success: true,
         status: 'not_connected',
@@ -42,9 +47,6 @@ export async function GET(request: NextRequest) {
         }
       })
     }
-
-    // Use database config (check both camelCase and snake_case)
-    const config = user?.instagramConfig || (user as any)?.instagram_config
     
     if (!config) {
       return NextResponse.json({
