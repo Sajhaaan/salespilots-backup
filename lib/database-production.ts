@@ -792,13 +792,19 @@ export class ProductionDB {
   }
 
   // Create default demo users if JSON file doesn't exist
+  // Using FIXED password hashes so they work consistently in Vercel
   private static async createDefaultDemoUsers() {
-    const { hashPassword } = await import('./auth')
+    // Pre-computed password hashes with fixed salts for consistency
+    // test123@gmail.com -> password123
+    const testUserHash = 'pbkdf2$120000$sha512$ee5d448393d3ca6327f37b5c1e6b5f6e$48b29f9ac6eab38413cd2210005bcf38c4229ea0c0997fe40c92402ce40f3b8c0687481012161bbd3346046532f0e38c4fab4285ee7d4d1922bac9627a85013a'
+    
+    // admin@salespilots.io -> admin123  
+    const adminUserHash = 'pbkdf2$120000$sha512$11c304e4dcd9e1ae52d863620b83f667$8b3bd1046d7d7faa6e063e98f8606949ddf3f8c4ea71e5d792738d4b3f76ba940e1279af5595bc84a3084eb33785587f85bcec02b4566df465762a3da6ae748f'
     
     const demoUser: AuthUser = {
       id: 'user_1',
       email: 'test123@gmail.com',
-      passwordHash: hashPassword('password123'),
+      passwordHash: testUserHash,
       firstName: 'Test',
       lastName: 'User',
       emailVerified: true,
@@ -808,8 +814,8 @@ export class ProductionDB {
     
     const adminUser: AuthUser = {
       id: 'admin_1',
-      email: 'admin@salespilot.io',
-      passwordHash: hashPassword('admin123'),
+      email: 'admin@salespilots.io',
+      passwordHash: adminUserHash,
       firstName: 'Admin',
       lastName: 'User',
       emailVerified: true,
@@ -821,7 +827,8 @@ export class ProductionDB {
     
     console.log('✅ Default demo users initialized:')
     console.log('📧 User: test123@gmail.com / password123')
-    console.log('👑 Admin: admin@salespilot.io / admin123')
+    console.log('👑 Admin: admin@salespilots.io / admin123')
+    console.log('🔐 Using fixed password hashes for Vercel compatibility')
   }
 
   static async getAllUsers(): Promise<User[]> {
