@@ -145,8 +145,19 @@ export class ProductionDB {
       } else {
         // Use in-memory storage for demo
         console.log('🔍 Database: Using in-memory storage for auth query')
+        
+        // In Vercel, we need to ensure demo users exist on every request
+        if (process.env.VERCEL && inMemoryAuthUsers.length === 0) {
+          console.log('🔄 In-memory users empty in Vercel - seeding now')
+          await this.createDefaultDemoUsers()
+        }
+        
         const user = inMemoryAuthUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || null
         console.log('✅ Database: User found in memory:', !!user)
+        console.log('📊 Total users in memory:', inMemoryAuthUsers.length)
+        if (inMemoryAuthUsers.length > 0) {
+          console.log('👥 Available users:', inMemoryAuthUsers.map(u => u.email).join(', '))
+        }
         return user
       }
     } catch (error) {
