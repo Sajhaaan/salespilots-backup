@@ -68,13 +68,19 @@ export async function POST(request: NextRequest) {
     // For Vercel/production, we need secure cookies
     const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1'
     
-    response.cookies.set('sp_session', token, {
+    // Set cookie with explicit domain for Vercel
+    const cookieOptions: any = {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
       expires: expiresAt,
       path: '/',
-    })
+    }
+    
+    // Don't set domain - let browser handle it automatically
+    // This ensures cookie works on both localhost and Vercel
+    
+    response.cookies.set('sp_session', token, cookieOptions)
     
     console.log('🍪 Cookie set in response headers with settings:', {
       httpOnly: true,
