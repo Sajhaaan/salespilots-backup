@@ -25,7 +25,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Check Instagram connection from environment variables (fallback for Vercel)
-    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
+    // More lenient check - if we have the required Instagram credentials, consider it connected
+    const hasInstagramCredentials = !!(
+      process.env.INSTAGRAM_PAGE_ID && 
+      process.env.INSTAGRAM_PAGE_ACCESS_TOKEN && 
+      process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID &&
+      process.env.INSTAGRAM_USERNAME
+    )
+    
+    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true' || hasInstagramCredentials
     const envInstagramHandle = process.env.INSTAGRAM_USERNAME
     
     // Use database data or fall back to environment variables
