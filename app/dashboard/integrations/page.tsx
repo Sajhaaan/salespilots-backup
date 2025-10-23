@@ -393,7 +393,16 @@ export default function IntegrationsPage() {
         }, 500)
       } else {
         console.error('Disconnect error:', data)
-        toast.error(data.details || data.error || 'Failed to disconnect Instagram')
+        
+        // Handle environment-based connection
+        if (data.isEnvBased) {
+          toast.error(
+            'Instagram is connected via environment variables. To disconnect, remove INSTAGRAM_* variables from Vercel settings.',
+            { duration: 8000 }
+          )
+        } else {
+          toast.error(data.details || data.error || 'Failed to disconnect Instagram')
+        }
       }
     } catch (error: any) {
       console.error('Disconnect exception:', error)

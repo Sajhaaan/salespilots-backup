@@ -102,6 +102,10 @@ console.log('  - Vercel:', process.env.VERCEL ? '✅ Yes' : '❌ No')
 // In-memory storage for demo/development (only when Supabase is not available)
 let inMemoryAuthUsers: AuthUser[] = []
 let inMemorySessions: Session[] = []
+let inMemoryUsers: User[] = []
+
+// Track if we've initialized in-memory data for this serverless instance
+let inMemoryInitialized = false
 
 // Database operations
 export class ProductionDB {
@@ -246,7 +250,7 @@ export class ProductionDB {
       
       // Clean up expired sessions
       const now = new Date()
-      sessions = sessions.filter(s => new Date(s.expiresAt) > now)
+      sessions = sessions.filter((s: Session) => new Date(s.expiresAt) > now)
       
       fs.default.writeFileSync(sessionsPath, JSON.stringify(sessions, null, 2))
       console.log(`💾 Session saved to file: ${session.id}`)
@@ -566,6 +570,12 @@ export class ProductionDB {
         if (process.env.VERCEL) {
           console.log('⚠️ Warning: Using in-memory storage in Vercel production!')
           console.log('⚠️ This means Supabase is not properly configured.')
+          
+          // Store in Vercel in-memory cache
+          inMemoryUsers.push(dbUser as any)
+          console.log(`✅ Created user profile in Vercel memory: ${dbUser.email}`)
+          console.log(`📊 Total users in Vercel cache: ${inMemoryUsers.length}`)
+          return dbUser
         }
 
         // Persist to JSON file in local development so subsequent reads work
@@ -618,10 +628,16 @@ export class ProductionDB {
         }
         return data
       } else {
-        // Use in-memory storage for demo (no file operations in Vercel)
+        // Use in-memory storage for demo (works in Vercel)
         if (process.env.VERCEL) {
           console.log('🔄 Using in-memory storage in Vercel environment')
-          // For now, return null since we're not persisting in Vercel
+          // Check in-memory cache first
+          const cachedUser = inMemoryUsers.find((u: any) => u.auth_user_id === authUserId)
+          if (cachedUser) {
+            console.log('✅ Found user in Vercel in-memory cache:', cachedUser.email)
+            return cachedUser
+          }
+          console.log('❌ User not found in Vercel in-memory cache')
           return null
         }
         
@@ -661,12 +677,23 @@ export class ProductionDB {
         }
         return data
       } else {
-        // Use in-memory storage for demo (no file operations in Vercel)
+        // Use in-memory storage for demo (works in Vercel)
         if (process.env.VERCEL) {
           console.log('🔄 Using in-memory storage in Vercel environment')
-          // For now, just return the updated data without persisting
-          console.log(`✅ Updated user profile: ${userId}`)
-          return { id: userId, ...userData }
+          
+          // Update in Vercel in-memory cache
+          const userIndex = inMemoryUsers.findIndex((u: any) => u.id === userId)
+          if (userIndex === -1) {
+            console.log('⚠️ User not found in Vercel cache, creating new record')
+            const newUser = { id: userId, created_at: new Date().toISOString(), ...userData }
+            inMemoryUsers.push(newUser)
+            console.log(`✅ Created user profile in Vercel memory while updating: ${userId}`)
+            return newUser
+          }
+          
+          inMemoryUsers[userIndex] = { ...inMemoryUsers[userIndex], ...userData, updated_at: new Date().toISOString() }
+          console.log(`✅ Updated user profile in Vercel memory: ${userId}`)
+          return inMemoryUsers[userIndex]
         }
         
         // Use JSON file storage for local development
@@ -696,7 +723,7 @@ export class ProductionDB {
           return newUser
         }
         
-        users[userIndex] = { ...users[userIndex], ...userData }
+        users[userIndex] = { ...users[userIndex], ...userData, updated_at: new Date().toISOString() }
         fs.default.writeFileSync(usersPath, JSON.stringify(users, null, 2))
         
         console.log(`✅ Updated user profile: ${userId}`)
@@ -853,7 +880,7 @@ export class ProductionDB {
         return data || []
       } else {
         // Use in-memory storage for demo
-        return Object.values(usersDB)
+        return inMemoryUsers
       }
     } catch (error) {
       console.error('❌ Get all users error:', error)

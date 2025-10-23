@@ -13,13 +13,31 @@ export async function GET(request: NextRequest) {
     const authUser = await getAuthUserFromRequest(request)
     
     if (!authUser) {
+      console.log('❌ Products GET: No auth user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('✅ Products GET: Auth user found:', authUser.email)
+
     // Find user profile using ProductionDB
-    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    let user = await ProductionDB.findUserByAuthId(authUser.id)
+    
+    // Auto-create user profile if it doesn't exist
     if (!user) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      console.log('⚠️ Products GET: User profile not found, creating one...')
+      user = await ProductionDB.createUser({
+        auth_user_id: authUser.id,
+        email: authUser.email,
+        first_name: authUser.firstName || '',
+        last_name: authUser.lastName || '',
+        business_name: `${authUser.firstName || authUser.email}'s Business`,
+        instagram_handle: '',
+        subscription_plan: 'free',
+        instagram_connected: false,
+        whatsapp_connected: false,
+        automation_enabled: false
+      })
+      console.log('✅ Products GET: User profile created:', user.id)
     }
 
     // Get user's products
@@ -45,14 +63,33 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthUserFromRequest(request)
     
     if (!authUser) {
+      console.log('❌ Product creation: No auth user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    console.log('✅ Product creation: Auth user found:', authUser.email)
+
     // Find user profile using ProductionDB
-    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    let user = await ProductionDB.findUserByAuthId(authUser.id)
+    
+    // Auto-create user profile if it doesn't exist
     if (!user) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      console.log('⚠️ Product creation: User profile not found, creating one...')
+      user = await ProductionDB.createUser({
+        auth_user_id: authUser.id,
+        email: authUser.email,
+        first_name: authUser.firstName || '',
+        last_name: authUser.lastName || '',
+        business_name: `${authUser.firstName || authUser.email}'s Business`,
+        instagram_handle: '',
+        subscription_plan: 'free',
+        instagram_connected: false,
+        whatsapp_connected: false,
+        automation_enabled: false
+      })
+      console.log('✅ Product creation: User profile created:', user.id)
     }
+    
     const productData = await request.json()
     
     // Validate required fields
@@ -135,8 +172,11 @@ export async function PUT(request: NextRequest) {
     const authUser = await getAuthUserFromRequest(request)
     
     if (!authUser) {
+      console.log('❌ Product update: No auth user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('✅ Product update: Auth user found:', authUser.email)
 
     const { id, ...updateData } = await request.json()
 
@@ -163,9 +203,24 @@ export async function PUT(request: NextRequest) {
     }
 
     // Find user profile using ProductionDB
-    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    let user = await ProductionDB.findUserByAuthId(authUser.id)
+    
+    // Auto-create user profile if it doesn't exist
     if (!user) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      console.log('⚠️ Product update: User profile not found, creating one...')
+      user = await ProductionDB.createUser({
+        auth_user_id: authUser.id,
+        email: authUser.email,
+        first_name: authUser.firstName || '',
+        last_name: authUser.lastName || '',
+        business_name: `${authUser.firstName || authUser.email}'s Business`,
+        instagram_handle: '',
+        subscription_plan: 'free',
+        instagram_connected: false,
+        whatsapp_connected: false,
+        automation_enabled: false
+      })
+      console.log('✅ Product update: User profile created:', user.id)
     }
 
     // Get all products and find the one to update
@@ -206,8 +261,11 @@ export async function DELETE(request: NextRequest) {
     const authUser = await getAuthUserFromRequest(request)
     
     if (!authUser) {
+      console.log('❌ Product delete: No auth user found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('✅ Product delete: Auth user found:', authUser.email)
 
     const { id } = await request.json()
 
@@ -221,9 +279,24 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Find user profile using ProductionDB
-    const user = await ProductionDB.findUserByAuthId(authUser.id)
+    let user = await ProductionDB.findUserByAuthId(authUser.id)
+    
+    // Auto-create user profile if it doesn't exist
     if (!user) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
+      console.log('⚠️ Product delete: User profile not found, creating one...')
+      user = await ProductionDB.createUser({
+        auth_user_id: authUser.id,
+        email: authUser.email,
+        first_name: authUser.firstName || '',
+        last_name: authUser.lastName || '',
+        business_name: `${authUser.firstName || authUser.email}'s Business`,
+        instagram_handle: '',
+        subscription_plan: 'free',
+        instagram_connected: false,
+        whatsapp_connected: false,
+        automation_enabled: false
+      })
+      console.log('✅ Product delete: User profile created:', user.id)
     }
 
     // Get all products and find the one to delete

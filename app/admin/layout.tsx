@@ -36,21 +36,6 @@ export default function AdminLayout({
     try {
       console.log('🔍 Checking admin access...')
       
-      // Temporarily bypass authentication for testing
-      const mockUser = {
-        id: 'admin-test',
-        email: 'testadmin@gmail.com',
-        firstName: 'Test',
-        lastName: 'Admin',
-        role: 'admin',
-      }
-      
-      console.log('✅ Using mock admin user for testing')
-      setUser(mockUser)
-      setLoading(false)
-      
-      // Original authentication code (commented out for testing)
-      /*
       const response = await fetch('/api/auth/me', {
         method: 'GET',
         credentials: 'include',
@@ -62,7 +47,7 @@ export default function AdminLayout({
       
       if (!response.ok) {
         console.log('❌ Auth response not ok, redirecting to sign-in')
-        router.replace('/sign-in')
+        router.replace('/sign-in?redirect=/admin')
         return
       }
       
@@ -78,11 +63,10 @@ export default function AdminLayout({
       
       console.log('✅ User is admin, setting user data')
       setUser(userData.user)
-      setLoading(false) // Set loading to false immediately after setting user
-      */
+      setLoading(false)
     } catch (error) {
       console.error('Admin access check failed:', error)
-      router.replace('/sign-in')
+      router.replace('/sign-in?redirect=/admin')
     }
   }
 

@@ -14,6 +14,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if Instagram is connected via environment variables
+    const hasEnvCredentials = !!(
+      process.env.INSTAGRAM_PAGE_ID && 
+      process.env.INSTAGRAM_PAGE_ACCESS_TOKEN && 
+      process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID &&
+      process.env.INSTAGRAM_USERNAME
+    )
+    
+    if (hasEnvCredentials) {
+      console.log('⚠️ Instagram is connected via environment variables')
+      return NextResponse.json({ 
+        success: false,
+        error: 'Cannot disconnect Instagram',
+        details: 'Instagram is connected via environment variables. Please remove the Instagram credentials from your Vercel environment variables to disconnect.',
+        isEnvBased: true
+      }, { status: 400 })
+    }
+
     // Find user profile
     const user = await ProductionDB.findUserByAuthId(authUser.id)
     console.log('📝 User profile found:', user ? user.id : 'none')

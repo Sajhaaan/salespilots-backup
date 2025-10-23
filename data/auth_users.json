@@ -24,7 +24,8 @@
     "passwordHash": "pbkdf2$120000$sha512$bdf06ec3b712f47bc3910d3afaaf8390$9873b04546be7363ca1185912f6180b1b541c411eb3ecf1e750b407b1b7fc92823ac59cd7c0d6c51173a52d468c00a559f955529ea41bace245ecbf705acb1bd",
     "firstName": "Sajhan",
     "lastName": "Abdul Naser",
-    "emailVerified": false,
+    "emailVerified": true,
+    "role": "admin",
     "id": "54e1f818-ded3-4cac-919d-9a546d80a347",
     "createdAt": "2025-09-23T15:32:00.109Z"
   },

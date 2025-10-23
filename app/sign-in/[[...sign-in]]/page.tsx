@@ -64,8 +64,18 @@ export default function SignInPage() {
         localStorage.setItem('sp_auth', 'true')
         console.log('💾 User stored in localStorage')
         
-        // Redirect to the intended page or dashboard
-        const redirectTo = searchParams.get('redirect') || '/dashboard'
+        // Redirect based on user role
+        let redirectTo = searchParams.get('redirect')
+        if (!redirectTo) {
+          // Check if user is admin
+          if (data.user?.role === 'admin') {
+            redirectTo = '/admin'
+            console.log('👑 Admin user detected, redirecting to /admin')
+          } else {
+            redirectTo = '/dashboard'
+            console.log('👤 Regular user, redirecting to /dashboard')
+          }
+        }
         
         // Force a hard reload to ensure cookies are properly set
         console.log(`🔄 Redirecting to ${redirectTo}...`)
