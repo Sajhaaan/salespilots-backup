@@ -28,14 +28,27 @@ export async function POST(request: NextRequest) {
 
     console.log('🔄 Updating user profile to disconnect Instagram...')
     
-    // Clear Instagram connection (use snake_case for database columns)
+    // Clear Instagram connection (use BOTH snake_case AND camelCase for compatibility)
     const updatedUser = await ProductionDB.updateUser(user.id, {
+      // Snake_case fields (database standard)
       instagram_connected: false,
       instagram_handle: null,
       instagram_config: null,
       instagram_auto_reply: false,
       automation_enabled: false,
       instagram_connected_at: null,
+      instagram_access_token: null,
+      instagram_page_id: null,
+      instagram_business_account_id: null,
+      // CamelCase fields (for JSON file compatibility)
+      instagramConnected: false,
+      instagramHandle: null,
+      instagramConfig: null,
+      instagramAutoReply: false,
+      instagramConnectedAt: null,
+      instagramAccessToken: null,
+      instagramPageId: null,
+      instagramBusinessAccountId: null,
       updated_at: new Date().toISOString()
     })
 

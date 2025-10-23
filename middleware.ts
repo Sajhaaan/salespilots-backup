@@ -106,11 +106,14 @@ function getClientIP(request: NextRequest): string {
 }
 
 export async function middleware(request: NextRequest) {
-  // Temporarily disable all middleware functionality
-  return NextResponse.next()
   const { pathname } = request.nextUrl
   const userAgent = request.headers.get('user-agent') || ''
   const ip = getClientIP(request)
+
+  // Skip rate limiting for localhost development
+  if (request.nextUrl.hostname === 'localhost' || request.nextUrl.hostname === '127.0.0.1') {
+    return NextResponse.next()
+  }
 
   // Skip middleware for static files and Next.js internals
   if (

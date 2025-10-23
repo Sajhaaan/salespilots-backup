@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ProductionDB } from '@/lib/database-production'
 import { verifyPassword, createSession, setAuthCookie } from '@/lib/auth'
 import { initializeApp } from '@/lib/startup'
+import { signinSchema } from '@/lib/validation'
+import { successResponse, errorResponse, validationErrorResponse } from '@/lib/api-response'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,16 +12,23 @@ export async function POST(request: NextRequest) {
     // Initialize app if not already done
     await initializeApp()
     
-    const { email, password } = await request.json()
-    console.log('📧 Login attempt for:', email)
-
-    // Validate input
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
+    const body = await request.json()
+    
+    // Validate input with schema
+    const validation = signinSchema.safeParse(body)
+    if (!validation.success) {
+      return validationErrorResponse(
+        'Invalid input data',
+        validation.error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }))
       )
     }
+    
+    const { email, password } = validation.data
+    console.log('📧 Login attempt for:', email)
 
     // Find user by email
     const user = await ProductionDB.findAuthUserByEmail(email.toLowerCase())
@@ -27,10 +36,7 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       console.log('❌ User not found for email:', email)
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
+      return NextResponse.json({ ok: false, error: 'Invalid credentials' }, { status: 401 })
     }
 
     // Verify password
@@ -39,27 +45,24 @@ export async function POST(request: NextRequest) {
     
     if (!passwordValid) {
       console.log('❌ Invalid password for user:', email)
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      )
+      return NextResponse.json({ ok: false, error: 'Invalid credentials' }, { status: 401 })
     }
 
-         // Create session
+    // Create session
     const { token, expiresAt } = await createSession(user.id)
     console.log('🔑 Session created:', { token: token.substring(0, 8) + '...', expiresAt })
     
-    // Create response with user data
-    const response = NextResponse.json({
-      ok: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role || 'user',
-      },
-    })
+        // Create response with user data
+        const response = NextResponse.json({
+          ok: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role || 'user',
+          },
+        }, { status: 200 })
     
     // Set authentication cookie in response headers with proper settings
     // For Vercel/production, we need secure cookies
@@ -84,13 +87,10 @@ export async function POST(request: NextRequest) {
     })
     
     return response
-  } catch (error) {
-    console.error('Signin error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
+    } catch (error) {
+      console.error('Signin error:', error)
+      return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 })
+    }
 }
 
 

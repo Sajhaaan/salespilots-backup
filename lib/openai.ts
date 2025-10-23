@@ -1,39 +1,40 @@
-// OpenAI integration for core AI features
-import OpenAI from 'openai'
+// AI integration using Bytez.js for core AI features
+import Bytez from 'bytez.js'
 import { SimpleDB } from './database'
 
-// Get OpenAI configuration from database
-async function getOpenAIConfig() {
+// Get AI configuration from database
+async function getAIConfig() {
   try {
     const configDB = new SimpleDB('openai_config.json')
     const configs = await configDB.read()
     return configs.length > 0 ? configs[0] : null
   } catch (error) {
-    console.error('Failed to load OpenAI config:', error)
+    console.error('Failed to load AI config:', error)
     return null
   }
 }
 
-// Get OpenAI instance with saved configuration
-export async function getOpenAIInstance() {
-  const config = await getOpenAIConfig()
-  const apiKey = config?.apiKey || process.env.OPENAI_API_KEY || 'dummy-key'
+// Get Bytez instance with saved configuration
+export async function getBytezInstance() {
+  const apiKey = process.env.BYTEZ_API_KEY || '92955c33a0e54790f52914eaa975e898'
   
   // Check if we have a valid API key
-  if (!apiKey || apiKey === 'dummy-key') {
-    console.warn('⚠️ OpenAI API key not configured - AI features will be limited')
+  if (!apiKey) {
+    console.warn('⚠️ Bytez API key not configured - AI features will be limited')
   }
   
-  return new OpenAI({
-    apiKey: apiKey,
-  })
+  return new Bytez(apiKey)
 }
 
-// Check if OpenAI is properly configured
+// Get OpenAI instance (legacy compatibility)
+export async function getOpenAIInstance() {
+  return await getBytezInstance()
+}
+
+// Check if AI is properly configured
 export async function isOpenAIConfigured(): Promise<boolean> {
-  const config = await getOpenAIConfig()
-  const apiKey = config?.apiKey || process.env.OPENAI_API_KEY
-  return !!(apiKey && apiKey !== 'dummy-key' && config?.status === 'connected')
+  const apiKey = process.env.BYTEZ_API_KEY
+  return !!(apiKey && apiKey.length > 20)
 }
 
 // AI-powered Instagram DM responder with fine-tuning support
@@ -47,8 +48,8 @@ export async function generateDMResponse(
   }
 ) {
   try {
-    const openai = await getOpenAIInstance()
-    const config = await getOpenAIConfig()
+    const bytez = await getBytezInstance()
+    const config = await getAIConfig()
     
     // Use custom AI configuration if available, otherwise fall back to default
     let systemPrompt = ''
@@ -77,23 +78,26 @@ RESPONSE STYLE:
 - Offer help with payment and delivery`
     }
 
-    const completion = await openai.chat.completions.create({
-      model: config?.model || "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: customerMessage }
-      ],
-      max_tokens: parseInt(config?.maxTokens || "150"),
-      temperature: parseFloat(config?.temperature || "0.7"),
-    })
+    // Use Bytez with gpt-4o model
+    const model = bytez.model("openai/gpt-4o")
+    
+    const { error, output } = await model.run([
+      { role: "system", content: systemPrompt },
+      { role: "user", content: customerMessage }
+    ])
+
+    if (error) {
+      console.error('Bytez API Error:', error)
+      throw new Error(error)
+    }
 
     return {
-      response: completion.choices[0].message.content,
+      response: output,
       category: categorizeMessage(customerMessage),
       language: detectLanguage(customerMessage)
     }
   } catch (error) {
-    console.error('OpenAI DM Response Error:', error)
+    console.error('AI DM Response Error:', error)
     
     // Check if it's an API key issue
     const isConfigured = await isOpenAIConfigured()
@@ -248,15 +252,13 @@ export async function processOrderFromMessage(
   availableProducts: string[]
 ) {
   try {
-    const openai = await getOpenAIInstance()
-    const config = await getOpenAIConfig()
+    const bytez = await getBytezInstance()
+    const model = bytez.model("openai/gpt-4o")
     
-    const completion = await openai.chat.completions.create({
-      model: config?.model || "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are an order processing AI. Analyze the customer message and determine if they want to place an order.
+    const { error, output } = await model.run([
+      {
+        role: "system",
+        content: `You are an order processing AI. Analyze the customer message and determine if they want to place an order.
 
 Available products: ${availableProducts.join(', ')}
 Customer history: ${JSON.stringify(customerHistory.slice(-3))}
@@ -279,16 +281,18 @@ Respond in JSON format:
   "confidence": number (0-100),
   "nextAction": "what to ask customer next"
 }`
-        },
-        {
-          role: "user",
-          content: customerMessage
-        }
-      ],
-      max_tokens: parseInt(config?.maxTokens || "300"),
-    })
+      },
+      {
+        role: "user",
+        content: customerMessage
+      }
+    ])
 
-    return JSON.parse(completion.choices[0].message.content || '{}')
+    if (error) {
+      throw new Error(error)
+    }
+
+    return JSON.parse(output || '{}')
   } catch (error) {
     console.error('Order Processing Error:', error)
     return {

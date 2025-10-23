@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import Bytez from 'bytez.js'
 import { getSystemPrompt } from '@/lib/chatbot-knowledge-base'
 
 // Fallback responses when OpenAI quota is exceeded or API key is not configured
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'dummy-key') {
-      console.log('⚠️  OpenAI API key not configured, using fallback responses')
+    // Check if Bytez API key is configured
+    if (!process.env.BYTEZ_API_KEY) {
+      console.log('⚠️  Bytez API key not configured, using fallback responses')
       const fallbackMessage = getFallbackResponse(message)
       
       // Determine category
@@ -100,37 +100,27 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Initialize OpenAI client (supports both OpenAI and OpenRouter)
-      const apiKey = process.env.OPENAI_API_KEY || ''
-      const isOpenRouter = apiKey.startsWith('sk-or-')
-      
-      const openai = new OpenAI({
-        apiKey: apiKey,
-        baseURL: isOpenRouter ? 'https://openrouter.ai/api/v1' : undefined,
-        defaultHeaders: isOpenRouter ? {
-          'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://salespilots.io',
-          'X-Title': 'SalesPilots AI Chatbot'
-        } : undefined
-      })
+      // Initialize Bytez client
+      const bytez = new Bytez(process.env.BYTEZ_API_KEY)
+      const model = bytez.model("openai/gpt-4o")
 
       // Create chat completion with comprehensive knowledge base
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: getSystemPrompt()
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ],
-        max_tokens: 250,
-        temperature: 0.7,
-      })
+      const { error, output } = await model.run([
+        {
+          role: 'system',
+          content: getSystemPrompt()
+        },
+        {
+          role: 'user',
+          content: message
+        }
+      ])
 
-      const aiResponse = completion.choices[0]?.message?.content || 'I apologize, but I could not generate a response. Please try again.'
+      if (error) {
+        throw new Error(error)
+      }
+
+      const aiResponse = output || 'I apologize, but I could not generate a response. Please try again.'
 
       // Determine category based on message content
       let category = 'general'
@@ -148,11 +138,11 @@ export async function POST(request: NextRequest) {
         response: aiResponse,
         category: category,
         language: language,
-        model: 'gpt-3.5-turbo'
+        model: 'gpt-4o'
       })
 
     } catch (error: any) {
-      console.error('❌ OpenAI API error:', error)
+      console.error('❌ Bytez API error:', error)
       
       // Use fallback for any OpenAI errors
       const fallbackMessage = getFallbackResponse(message)

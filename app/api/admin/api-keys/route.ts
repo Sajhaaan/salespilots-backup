@@ -13,11 +13,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // For now, allow any authenticated user to access API keys
-    // In production, you'd want to check for admin role
-    const isAdmin = true // TODO: Implement proper admin check
-
-    if (!isAdmin) {
+    // Check if user is admin
+    if (authUser.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
@@ -46,11 +43,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // For now, allow any authenticated user to save API keys
-    // In production, you'd want to check for admin role
-    const isAdmin = true // TODO: Implement proper admin check
-
-    if (!isAdmin) {
+    // Check if user is admin
+    if (authUser.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 

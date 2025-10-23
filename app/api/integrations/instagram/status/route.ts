@@ -10,21 +10,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find user in database (optional)
+    // Find user in database
     const user = await ProductionDB.findUserByAuthId(authUser.id)
     
-    // Check Instagram connection from environment variables (fallback for Vercel)
-    const envInstagramConnected = process.env.INSTAGRAM_CONNECTED === 'true'
-    const envInstagramConfig = envInstagramConnected ? {
-      pageId: process.env.INSTAGRAM_PAGE_ID,
-      pageAccessToken: process.env.INSTAGRAM_PAGE_ACCESS_TOKEN,
-      instagramBusinessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
-      username: process.env.INSTAGRAM_USERNAME,
-      expiresAt: new Date(Date.now() + (60 * 24 * 60 * 60 * 1000)).toISOString(),
-      createdAt: new Date().toISOString()
-    } : null
-    
-    if (!user && !envInstagramConnected) {
+    if (!user) {
       return NextResponse.json({
         success: true,
         status: 'not_connected',
@@ -37,8 +26,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Check if user has Instagram credentials (from DB or env vars)
-    const hasInstagramConfig = !!(user?.instagramConfig && user?.instagramConnected) || envInstagramConnected
+    // Check if user has Instagram credentials (check BOTH camelCase and snake_case for compatibility)
+    const hasInstagramConfig = !!((user?.instagramConfig || (user as any)?.instagram_config) && 
+                                  (user?.instagramConnected || (user as any)?.instagram_connected))
     
     if (!hasInstagramConfig) {
       return NextResponse.json({
@@ -53,8 +43,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Use database config or environment config
-    const config = user?.instagramConfig || envInstagramConfig
+    // Use database config (check both camelCase and snake_case)
+    const config = user?.instagramConfig || (user as any)?.instagram_config
     
     if (!config) {
       return NextResponse.json({
@@ -94,7 +84,7 @@ export async function GET(request: NextRequest) {
       message: 'Instagram connected successfully',
       user: {
         instagramConnected: true,
-        instagramHandle: instagramInfo?.username || config.username || process.env.INSTAGRAM_USERNAME || 'Unknown',
+        instagramHandle: instagramInfo?.username || config.username || 'Unknown',
         instagramConfig: {
           pageId: config.pageId,
           instagramBusinessAccountId: config.instagramBusinessAccountId,

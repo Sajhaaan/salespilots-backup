@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Fira+Code:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Fira+Code:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -381,10 +381,55 @@ main[data-pathname] {
   }
 }
 
+@layer base {
+  /* Modern typography and base styles */
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+}
+
 @layer components {
   /* Responsive container */
   .max-container {
-    @apply mx-auto max-w-screen-xl container-padding;
+    @apply mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Mobile-first responsive utilities */
+  .container-mobile {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-desktop {
+    @apply px-6 lg:px-8;
   }
 
   /* Premium Glassmorphism Cards - Enhanced Modern Design */

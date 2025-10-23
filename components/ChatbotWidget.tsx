@@ -161,10 +161,16 @@ export default function ChatbotWidget({ isOpen, onToggle, className = '' }: Chat
       const data = await response.json()
       const responseTime = Date.now() - startTime
 
+      // Extract response content (handle both string and object responses)
+      let responseContent = data.response
+      if (typeof responseContent === 'object' && responseContent.content) {
+        responseContent = responseContent.content
+      }
+
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: data.response || 'Sorry, I could not process your request.',
+        content: responseContent || 'Sorry, I could not process your request.',
         timestamp: new Date().toISOString(),
         metadata: {
           category: data.category,

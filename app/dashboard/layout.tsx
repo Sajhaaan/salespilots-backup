@@ -23,6 +23,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ChatbotWidget from '@/components/ChatbotWidget'
+import MobileNav from '@/components/ui/mobile-nav'
+import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard, color: 'blue' },
@@ -49,6 +51,15 @@ export default function DashboardLayout({
   const [dbUser, setDbUser] = useState<{ id: string; email: string } | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [headerStats, setHeaderStats] = useState<{ revenue: string; orders: number } | null>(null)
+
+  // Mobile navigation items for bottom nav
+  const mobileNavItems = [
+    { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag },
+    { name: 'Products', href: '/dashboard/products', icon: Package },
+    { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings }
+  ]
 
   useEffect(() => {
     let mounted = true
