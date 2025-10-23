@@ -740,10 +740,18 @@ export class ProductionDB {
     if (!isProductionDB) {
       console.log('🔧 Using in-memory database for demo mode')
       
+      // In Vercel (without Supabase), we need to seed in-memory database on every request
+      if (process.env.VERCEL) {
+        console.log('🔄 Running in Vercel without Supabase - seeding in-memory users')
+        // Always create demo users in Vercel since in-memory is cleared on each request
+        await this.createDefaultDemoUsers()
+        return
+      }
+      
       // Clear existing users and create fresh ones
       inMemoryAuthUsers = []
       
-      // Try to load users from JSON file first
+      // Try to load users from JSON file first (local development only)
       try {
         const fs = await import('fs')
         const path = await import('path')
