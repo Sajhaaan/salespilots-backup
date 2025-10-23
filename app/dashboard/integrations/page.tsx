@@ -253,8 +253,8 @@ export default function IntegrationsPage() {
       
       // Try to fetch status from API and user profile
       try {
-        // Fetch user profile first for accurate data (with cache busting)
-        const profileResponse = await fetch(`/api/user/profile${cacheBuster}`, { 
+        // Fetch Instagram status using the simple endpoint
+        const instagramResponse = await fetch(`/api/integrations/instagram/connected${cacheBuster}`, {
           credentials: 'include',
           cache: 'no-store',
           headers: {
@@ -262,8 +262,9 @@ export default function IntegrationsPage() {
             'Pragma': 'no-cache'
           }
         })
-        const profileData = await profileResponse.json()
+        const instagramData = await instagramResponse.json()
         
+        // Fetch general integration status
         const response = await fetch(`/api/integrations/status${cacheBuster}`, {
           credentials: 'include',
           cache: 'no-store',
@@ -274,20 +275,19 @@ export default function IntegrationsPage() {
         })
         const data = await response.json()
         
-        // Use profile data as primary source for Instagram
-        const instagramConnected = profileData?.user?.instagramConnected || false
-        const instagramHandle = profileData?.user?.instagramHandle || undefined
-        const automationEnabled = profileData?.user?.automation_enabled || false
+        // Use Instagram connected endpoint data (most reliable)
+        const instagramConnected = instagramData?.connected || false
+        const instagramHandle = instagramData?.username || undefined
         
         console.log('🔍 Integration Status Check:', { 
           instagramConnected, 
           instagramHandle,
-          automationEnabled,
-          profileUser: profileData?.user
+          instagramData,
+          statusData: data
         })
         
-        if (data.success || profileData?.user) {
-          // Update Instagram status (index 1)
+        if (data.success || instagramData?.success) {
+          // Update Instagram status (index 1) - use simple endpoint data
           defaultIntegrations[1].connected = instagramConnected
           defaultIntegrations[1].status = instagramConnected ? 'connected' : 'disconnected'
           defaultIntegrations[1].handle = instagramHandle
@@ -297,10 +297,9 @@ export default function IntegrationsPage() {
           }
           
           // Update Facebook status (index 0)
-          const facebookConnected = profileData?.user?.facebookConnected || false
+          const facebookConnected = data.integrations?.facebook?.connected || false
           defaultIntegrations[0].connected = facebookConnected
           defaultIntegrations[0].status = facebookConnected ? 'connected' : 'disconnected'
-          defaultIntegrations[0].handle = profileData?.user?.facebookConfig?.userInfo?.name
           
           // Update WhatsApp status (index 2)
           defaultIntegrations[2].connected = data.integrations?.whatsapp?.connected || false
@@ -310,8 +309,8 @@ export default function IntegrationsPage() {
             customers: data.integrations?.whatsapp?.customers || 0
           }
           
-          // Set automation status
-          setAutoReplyEnabled(automationEnabled)
+          // Set automation status based on Instagram connection
+          setAutoReplyEnabled(instagramConnected)
         }
       } catch (apiError) {
         console.error('Failed to fetch integration status:', apiError)
