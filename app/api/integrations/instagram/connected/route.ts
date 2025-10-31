@@ -32,24 +32,28 @@ export async function GET(request: NextRequest) {
       console.log('⚠️ Database check failed, falling back to env vars:', dbError)
     }
     
-    // Fallback to environment variables
+    // Fallback to environment variables (match webhook config)
     const hasCredentials = !!(
-      process.env.INSTAGRAM_PAGE_ID && 
       process.env.INSTAGRAM_PAGE_ACCESS_TOKEN && 
-      process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID &&
-      process.env.INSTAGRAM_USERNAME
+      process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
     )
+    
+    const autoReplyEnabled = process.env.INSTAGRAM_AUTO_REPLY_ENABLED !== 'false'
     
     if (hasCredentials) {
       console.log('✅ Instagram connected via environment variables')
+      console.log('   - Page Access Token:', process.env.INSTAGRAM_PAGE_ACCESS_TOKEN ? '✓' : '✗')
+      console.log('   - Business Account ID:', process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID ? '✓' : '✗')
+      console.log('   - Auto-Reply Enabled:', autoReplyEnabled)
     }
     
     return NextResponse.json({
       success: true,
       connected: hasCredentials,
-      username: process.env.INSTAGRAM_USERNAME || null,
+      username: process.env.INSTAGRAM_USERNAME || process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID?.substring(0, 10) || 'Instagram Business',
       source: 'environment',
-      message: hasCredentials ? 'Instagram is connected' : 'Instagram is not connected'
+      autoReplyEnabled: autoReplyEnabled,
+      message: hasCredentials ? 'Instagram is connected via environment variables' : 'Instagram is not connected'
     })
   } catch (error) {
     return NextResponse.json({ 
