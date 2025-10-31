@@ -6,10 +6,17 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-// New Supabase credentials
-const SUPABASE_URL = 'https://qvpjtsmjyogejjtlgrpd.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cGp0c21qeW9nZWpqdGxncnBkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Njg0Nzc3MiwiZXhwIjoyMDcyNDIzNzcyfQ.bhVYCTD6TsrwEb5yB7X6nyXRkMosNv2K8o5sBZQkpfc';
+// Load credentials from environment variables
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('❌ Error: Missing required environment variables');
+  console.error('   Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local');
+  process.exit(1);
+}
 
 // Colors for console output
 const colors = {

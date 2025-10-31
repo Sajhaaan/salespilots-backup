@@ -4,12 +4,12 @@ import { usersDB, authUsersDB } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
-    // Temporarily bypass authentication for testing
-    // const authUser = await getAuthUserFromRequest(request)
-    // 
-    // if (!authUser || authUser.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    // }
+    // Verify admin authentication
+    const authUser = await getAuthUserFromRequest(request)
+    
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Get user data from JSON databases
     const users = await usersDB.read()

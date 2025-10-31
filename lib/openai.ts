@@ -16,11 +16,12 @@ async function getAIConfig() {
 
 // Get Bytez instance with saved configuration
 export async function getBytezInstance() {
-  const apiKey = process.env.BYTEZ_API_KEY || '92955c33a0e54790f52914eaa975e898'
+  const apiKey = process.env.BYTEZ_API_KEY
   
   // Check if we have a valid API key
   if (!apiKey) {
     console.warn('⚠️ Bytez API key not configured - AI features will be limited')
+    throw new Error('BYTEZ_API_KEY environment variable is required for AI features')
   }
   
   return new Bytez(apiKey)

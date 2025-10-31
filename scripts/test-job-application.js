@@ -1,9 +1,16 @@
 const { createClient } = require('@supabase/supabase-js')
 const { v4: uuidv4 } = require('uuid')
+require('dotenv').config()
 
-// Supabase configuration
-const supabaseUrl = 'https://exeftlgqysaobogiliyn.supabase.co'
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4ZWZ0bGdxeXNhb2JvZ2lsaXluIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDI0NzQ1MCwiZXhwIjoyMDY5ODIzNDUwfQ.NLTwcA7_SANzKYCRb1c1XfwNt8FMoUngJWlqYLcdQs0'
+// Supabase configuration - load from environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Error: Missing required environment variables')
+  console.error('   Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local')
+  process.exit(1)
+}
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 

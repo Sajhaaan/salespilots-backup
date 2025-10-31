@@ -1,0 +1,122 @@
+{
+  "timestamp": "2025-10-31T16:08:44.921Z",
+  "summary": {
+    "passed": 12,
+    "critical": 1,
+    "high": 3,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  },
+  "findings": {
+    "critical": [
+      {
+        "message": "Potential hardcoded credentials",
+        "details": {
+          "file": "/Users/sajhan/Desktop/salespilots-backup-main/app/documentation/developer-guides/sdk/page.tsx",
+          "recommendation": "Use environment variables for all secrets"
+        },
+        "timestamp": "2025-10-31T16:08:44.896Z"
+      }
+    ],
+    "high": [
+      {
+        "message": "Potential Private Key exposed",
+        "details": {
+          "file": "/Users/sajhan/Desktop/salespilots-backup-main/security-test.js",
+          "count": 1
+        },
+        "timestamp": "2025-10-31T16:08:44.875Z"
+      },
+      {
+        "message": "Potential SQL injection vulnerability",
+        "details": {
+          "file": "/Users/sajhan/Desktop/salespilots-backup-main/app/api/admin/applications/route.ts",
+          "recommendation": "Use parameterized queries or ORM"
+        },
+        "timestamp": "2025-10-31T16:08:44.878Z"
+      },
+      {
+        "message": "Potential SQL injection vulnerability",
+        "details": {
+          "file": "/Users/sajhan/Desktop/salespilots-backup-main/app/api/notifications/route.ts",
+          "recommendation": "Use parameterized queries or ORM"
+        },
+        "timestamp": "2025-10-31T16:08:44.886Z"
+      }
+    ],
+    "medium": [],
+    "low": [],
+    "info": []
+  },
+  "passed": [
+    {
+      "message": "No obvious secrets found in code",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.877Z"
+    },
+    {
+      "message": "No authentication bypass detected",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.877Z"
+    },
+    {
+      "message": "All critical security headers configured",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.888Z"
+    },
+    {
+      "message": "Rate limiting is configured",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.888Z"
+    },
+    {
+      "message": "CORS configuration appears secure",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.910Z"
+    },
+    {
+      "message": "Input validation detected in API routes (137 routes checked)",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.914Z"
+    },
+    {
+      "message": "Security-focused packages detected",
+      "details": {
+        "packages": [
+          "helmet",
+          "express-rate-limit",
+          "express-validator",
+          "joi",
+          "zod"
+        ]
+      },
+      "timestamp": "2025-10-31T16:08:44.914Z"
+    },
+    {
+      "message": "Security audit script configured",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.914Z"
+    },
+    {
+      "message": "Environment variables properly documented",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.915Z"
+    },
+    {
+      "message": "Strong password hashing detected",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.915Z"
+    },
+    {
+      "message": "Timing-safe password comparison detected",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.915Z"
+    },
+    {
+      "message": "No obvious XSS vulnerabilities detected",
+      "details": null,
+      "timestamp": "2025-10-31T16:08:44.920Z"
+    }
+  ]
+}
