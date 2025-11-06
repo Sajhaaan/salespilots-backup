@@ -178,8 +178,11 @@ async function processInstagramMessage(event: any) {
     // Save incoming message
     await saveIncomingMessage(businessUser.id, customer.id, messageText, messageId)
 
-    // Check if auto-reply is enabled
-    const autoReplyEnabled = businessUser.automation_enabled || businessUser.instagram_auto_reply || false
+    // Check if auto-reply is enabled (default to true if not explicitly set)
+    // This allows the bot to work out of the box when credentials are configured
+    const autoReplyEnabled = businessUser.automation_enabled !== false && 
+                             businessUser.instagram_auto_reply !== false &&
+                             process.env.INSTAGRAM_AUTO_REPLY_ENABLED !== 'false'
     
     console.log('🤖 Auto-reply enabled:', autoReplyEnabled)
 
