@@ -148,3 +148,10 @@ __tests__/
 .cache/
 .parcel-cache/
 .next/
+# Environment files
+.env*
+!.env.example
+.env.local.backup.*
+.env.vercel
+.env.production
+.env.local.prev
